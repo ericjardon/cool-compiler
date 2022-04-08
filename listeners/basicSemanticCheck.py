@@ -20,15 +20,7 @@ class basicSemanticListener(coolListener):
         classname = ctx.TYPE(0).getText()
         if classname in prohibitedClassRedefinitions:
             raise prohibitedClassRedefinitions[classname]()
-        
-        # if ctx.TYPE(0).getText() == 'Int':
-        #     raise badredefineint()
 
-        # if ctx.TYPE(0).getText() == 'Object':
-        #     raise redefinedobject()
-
-        # if ctx.TYPE(0).getText() == 'SELF_TYPE':
-        #     raise selftyperedeclared()
 
     
 
