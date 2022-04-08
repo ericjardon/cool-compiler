@@ -29,7 +29,8 @@ class badmethodcallsitself(Exception):
     pass
 
 class badredefineint(Exception):
-    pass
+    def __init__(self, *args: object) -> None:
+        super().__init__("Bad redefinition of class 'Int'")
 
 class badstaticdispatch(Exception):
     pass
@@ -56,7 +57,9 @@ class inheritsstring(Exception):
     pass
 
 class letself(Exception):
-    pass
+    def __init__(self, *args: object) -> None:
+        super().__init__("Let declaration of keyword 'self'")
+    
 
 class letbadinit(Exception):
     pass
@@ -83,7 +86,8 @@ class redefinedclass(Exception):
     pass
 
 class redefinedobject(Exception):
-    pass
+    def __init__(self, *args: object) -> None:
+        super().__init__("Bad redefinition of class 'Object'")
 
 class returntypenoexist(Exception):
     pass
@@ -101,7 +105,8 @@ class selftypeparameterposition(Exception):
     pass
 
 class selftyperedeclared(Exception):
-    pass
+    def __init__(self, *args: object) -> None:
+        super().__init__("Bad redefinition of SELF_TYPE")
 
 class trickyatdispatch2(Exception):
     pass

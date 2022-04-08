@@ -1,4 +1,4 @@
-# Generated from /Users/jc/Documents/Compiladores/Proyecto/cool-compiler/antlr/cool.g4 by ANTLR 4.9.3
+# Generated from c:\Users\ericj\Documents\ITESM-8\Compiladores\cool\antlr\cool.g4 by ANTLR 4.9.3
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -126,7 +126,7 @@ class coolParser ( Parser ):
     sharedContextCache = PredictionContextCache()
 
     literalNames = [ "<INVALID>", "';'", "'inherits'", "'{'", "'}'", "'('", 
-                     "','", "')'", "':'", "'<-'", "'.'", "'@'", "'\u02DC'", 
+                     "','", "')'", "':'", "'<-'", "'.'", "'@'", "'\u00CB\u0153'", 
                      "'*'", "'/'", "'+'", "'-'", "'<'", "'<='", "'='", "'not'", 
                      "'=>'" ]
 

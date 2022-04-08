@@ -1,7 +1,7 @@
 from util.exceptions import *
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-
+from .semantic_utils import KEYWORDS
 class basicSemanticListener(coolListener):
 
     def __init__(self):
@@ -10,6 +10,17 @@ class basicSemanticListener(coolListener):
     def enterKlass(self, ctx:coolParser.KlassContext):
         if ctx.TYPE(0).getText() == 'Main':
             self.main = True
+        
+        if ctx.TYPE(0).getText() == 'Int':
+            raise badredefineint()
+
+        if ctx.TYPE(0).getText() == 'Object':
+            raise redefinedobject()
+
+        if ctx.TYPE(0).getText() == 'SELF_TYPE':
+            raise selftyperedeclared()
+
+    
 
     def exitKlass(self, ctx:coolParser.KlassContext):
         if (not self.main):
@@ -19,4 +30,9 @@ class basicSemanticListener(coolListener):
         if(ctx.ID().getText() == "self"):
             raise anattributenamedself("Self is a reserved keyword")
 
+    def enterLet_decl(self, ctx: coolParser.Let_declContext):
+        # For every ID check that it is not == 'self'
+        for token in ctx.getTokens(42):
+            if token.getText() == 'self':
+                raise letself()
 

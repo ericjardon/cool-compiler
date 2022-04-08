@@ -1,0 +1,5 @@
+KEYWORDS = {
+    'self',
+    'Int',
+    'Bool'
+}
