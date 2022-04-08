@@ -26,12 +26,21 @@ class coolListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by coolParser#feature.
-    def enterFeature(self, ctx:coolParser.FeatureContext):
+    # Enter a parse tree produced by coolParser#feature_function.
+    def enterFeature_function(self, ctx:coolParser.Feature_functionContext):
         pass
 
-    # Exit a parse tree produced by coolParser#feature.
-    def exitFeature(self, ctx:coolParser.FeatureContext):
+    # Exit a parse tree produced by coolParser#feature_function.
+    def exitFeature_function(self, ctx:coolParser.Feature_functionContext):
+        pass
+
+
+    # Enter a parse tree produced by coolParser#feature_attribute.
+    def enterFeature_attribute(self, ctx:coolParser.Feature_attributeContext):
+        pass
+
+    # Exit a parse tree produced by coolParser#feature_attribute.
+    def exitFeature_attribute(self, ctx:coolParser.Feature_attributeContext):
         pass
 
 
