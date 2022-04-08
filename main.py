@@ -17,4 +17,5 @@ def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('semantic/input/anattributenamedself.cool')
+    print("Run main!")
+    compile('resources/semantic/input/anattributenamedself.cool')
