@@ -1,5 +1,5 @@
 -- CoolAid 7.2
 class Main {
-main () :Int {let self:Int in 0};
+main () :Int {let a:Int, b:Bool, c:Bool, self:Int in 0};
 };
 
