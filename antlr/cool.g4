@@ -9,8 +9,8 @@ klass
     ;
 
 feature
-    : ID '(' ( params+=formal (',' params+=formal)* )? ')' ':' TYPE '{' expr '}'
-    | ID ':' TYPE ( '<-' expr )?
+    : ID '(' ( params+=formal (',' params+=formal)* )? ')' ':' TYPE '{' expr '}' #feature_function
+    | ID ':' TYPE ( '<-' expr )? #feature_attribute
     ;
 
 formal
