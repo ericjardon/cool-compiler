@@ -2,6 +2,12 @@ from util.exceptions import *
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 from .semantic_utils import KEYWORDS
+
+prohibitedClassRedefinitions = {
+    'Int':badredefineint,
+    'Object':redefinedobject,
+    'SELF_TYPE':selftyperedeclared,
+}
 class basicSemanticListener(coolListener):
 
     def __init__(self):
@@ -11,14 +17,18 @@ class basicSemanticListener(coolListener):
         if ctx.TYPE(0).getText() == 'Main':
             self.main = True
         
-        if ctx.TYPE(0).getText() == 'Int':
-            raise badredefineint()
+        classname = ctx.TYPE(0).getText()
+        if classname in prohibitedClassRedefinitions:
+            raise prohibitedClassRedefinitions[classname]()
+        
+        # if ctx.TYPE(0).getText() == 'Int':
+        #     raise badredefineint()
 
-        if ctx.TYPE(0).getText() == 'Object':
-            raise redefinedobject()
+        # if ctx.TYPE(0).getText() == 'Object':
+        #     raise redefinedobject()
 
-        if ctx.TYPE(0).getText() == 'SELF_TYPE':
-            raise selftyperedeclared()
+        # if ctx.TYPE(0).getText() == 'SELF_TYPE':
+        #     raise selftyperedeclared()
 
     
 
