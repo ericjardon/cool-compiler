@@ -58,3 +58,6 @@ Thumbs.db
 *.asm
 *.java
 *.interp
+
+__pycache__/
+.pytest_cache

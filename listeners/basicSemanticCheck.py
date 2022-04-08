@@ -29,11 +29,12 @@ class basicSemanticListener(coolListener):
 
         if ctx.expr():
             if ctx.expr().primary():
-                print(ctx.expr().primary())
-            if ctx.expr().primary().getText() == 'self':
-                raise selfassignment()
+                if ctx.expr().primary().getText() == 'self':
+                    raise selfassignment()
         
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         for param in ctx.params:
             if param.TYPE().getText() == 'SELF_TYPE':
                 raise selftypeparameterposition()
+            if param.ID().getText() == "self":
+                raise selfinformalparameter()
