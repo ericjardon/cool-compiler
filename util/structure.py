@@ -14,7 +14,7 @@ def lookupClass(name):
 
 class Method():
     """
-    Se usa una tabla de sÃ­mbolos lineal para
+    Se usa una tabla de símbolos lineal para
     almacenar los tipos de los parÃ¡metros.
     """
     def __init__(self, type, params=None):
@@ -84,16 +84,33 @@ class Klass():
 
     def conforms(self, B):
         """
-        self <= B, esto es, puedo asignar a una variable de esta clase
-        un objeto de tipo B? De otro modo, es B de la misma clase que self o
-        mÃ¡s particular?
+        Return True if B conforms to this class, False otherwise.
+        If B conforms to this (B <= self), then we can assign an instance of B to a variable of this class type.
+        tldr; checks if this class is an ancestor of B
         """
+        if B.name == self.name:  # any class conforms to itself
+            return True
         if B.name == 'Object':
             return False
-        if B.name == self.name:
-            return True
         else:
             return self.conforms(lookupClass(B.inherits))
+    
+    def conformsTo(self, B):
+        """
+        Return True if this class conforms to B, False otherwise.
+        If this class conforms to B, we can assign an instance of this class to a variable of type B.
+        tldr; checks if B is an ancestor of this class.
+        """
+        if self.name == B.name:
+            return True
+        if self.name == 'Object':
+            return False
+        
+        # If B is a parent, self conforms to B
+        if self.inherits == B:
+            return True
+        # Recursively look up the tree.
+        return _allClasses[self.inherits].conformsTo(B)
         
 class SymbolTable(MutableMapping):
     """
