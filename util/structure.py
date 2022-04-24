@@ -1,4 +1,5 @@
-from collections import MutableMapping, OrderedDict
+from _collections_abc import MutableMapping
+from collections import OrderedDict
 import unittest
 
 
@@ -169,6 +170,7 @@ class SymbolTableWithScopes(MutableMapping):
 
 class PruebasDeEstructura(unittest.TestCase):
     def setUp(self):
+        Klass("Object", None)
         self.k = [Klass("A"), Klass("B", "A"), Klass("C", "B"), Klass("Z", "B")]
 
     def test1(self):
@@ -255,7 +257,7 @@ class PruebasConScopes(unittest.TestCase):
 
     def test4(self):
         self.st['hola'] = 'mundo3'
-        self.assertEquals('mundo3', self.st['hola'])
+        self.assertEqual('mundo3', self.st['hola'])
 
     def test5(self):
         with self.assertRaises(KeyError):
@@ -273,33 +275,57 @@ class PruebasConScopes(unittest.TestCase):
         self.st['hola'] = 'scope1'
         self.st.openScope()
         self.st['hola'] = 'scope2'
-        self.assertEquals(self.st['hola'], 'scope2')
+        self.assertEqual(self.st['hola'], 'scope2')
         self.st.closeScope()
-        self.assertEquals(self.st['hola'], 'scope1')
+        self.assertEqual(self.st['hola'], 'scope1')
         self.st.closeScope()
-        self.assertEquals(self.st['hola'], 'scope0')
+        self.assertEqual(self.st['hola'], 'scope0')
 
-def setBaseClasses():
+class BaseKlasses(unittest.TestCase):
+    def setUp(self):
+        setBaseKlasses()
+    
+    def tearDown(self) -> None:
+        _allClasses = {}
+    
+    def test1(self):
+        io = lookupClass('IO')
+        m = io.lookupMethod('out_int')        
+        self.assertTrue(m.type, 'Int')
+
+    def test2(self):
+        str = lookupClass('String')
+        m = str.lookupMethod('substr')
+        self.assertTrue(m.params['l'], 'Int')
+
+
+'''
+Mandar llamar a setBaseKlasses() para crear las declaraciones de las 5 clases bÃ¡sicas
+'''
+def setBaseKlasses():
     k = Klass('Object')
     k.addMethod('abort', Method('Object'))
     k.addMethod('type_name', Method('Object'))
     k.addMethod('copy', Method('SELF_TYPE'))
-    _allClasses['Object'] = k
+    
     k = Klass('IO')
     k.addMethod('out_string', Method('SELF_TYPE', [('x', 'String')]))
     k.addMethod('out_int', Method('SELF_TYPE', [('x', 'Int')]))
     k.addMethod('in_string', Method('String'))
     k.addMethod('in_int', Method('Int'))
-    _allClasses['IO'] = k
+    
     k = Klass('Int')
-    _allClasses['Int'] = k
+    
     k = Klass('String')
     k.addMethod('length', Method('Int'))
     k.addMethod('concat', Method('String', [('s', 'String')]))
     k.addMethod('substr', Method('String', [('i', 'Int'), ('l', 'Int')]))
-    _allClasses['String'] = k
+    
     k = Klass('Bool')
-    _allClasses['String'] = k
+    
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
+    '''Para correr estas pruebas unitarias se puede simplemente pytest structure.py
+       Pytest las encuentra aunque estÃ¡n hechas al estilo unittest! QuÃ© bonito es Python ;,,,,D
+    '''
