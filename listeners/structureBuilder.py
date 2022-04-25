@@ -2,10 +2,12 @@ from ctypes import util
 from mimetypes import init
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn
+from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest
 from util.structure import *
 from util.structure import _allClasses as classDict
 class structureBuilder(coolListener):
+
+    basicTypes = set(['Int','String','Bool'])
 
     def __init__(self) -> None:
         classDict.clear()          
@@ -72,4 +74,27 @@ class structureBuilder(coolListener):
         name = ctx.ID().getText()
         type = ctx.TYPE().getText()
         ctx.activeClass.addAttribute(name, type)
-        
+
+    def enterPrimary(self, ctx: coolParser.PrimaryContext):
+        if ctx.INTEGER():
+            ctx.dataType = 'Int'
+        if ctx.STRING():
+            ctx.dataType = 'String'
+        if ctx.TRUE() or ctx.FALSE():
+            ctx.dataType = 'Bool'
+        else:
+            pass
+
+    def exitEquals(self, ctx: coolParser.EqualsContext):
+        typeOne = ctx.children[0].dataType
+        typeTwo = ctx.children[2].dataType
+
+        if typeOne in self.basicTypes and typeTwo in self.basicTypes:
+            if typeOne != typeTwo:
+                if typeOne == "Int" and typeOne == "String":
+                    raise badequalitytest()
+
+
+
+
+

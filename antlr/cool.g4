@@ -114,4 +114,3 @@ STRING  : '"' .*? '"' ;
 COMMENT : '(*' .*? '*)' -> skip ;
 LINE_COMENT : '--' ~[\r\n]* -> skip ;
 WS : [ \r\t\u000C\n]+ -> skip ;
-
