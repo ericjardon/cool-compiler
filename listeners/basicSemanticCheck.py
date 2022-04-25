@@ -8,6 +8,7 @@ prohibitedClassRedefinitions = {
     'Object':redefinedobject,
     'SELF_TYPE':selftyperedeclared,
 }
+
 prohibitedInheritance = {'Bool': inheritsbool, 'String': inheritsstring, 'SELF_TYPE': inheritsselftype}
 
 class basicSemanticListener(coolListener):
