@@ -2,7 +2,7 @@ from ctypes import util
 from mimetypes import init
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest
+from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 class structureBuilder(coolListener):
@@ -93,6 +93,10 @@ class structureBuilder(coolListener):
             if typeOne != typeTwo:
                 if typeOne == "Int" and typeOne == "String":
                     raise badequalitytest()
+                if typeOne == "Int" and typeOne == "Bool":
+                    raise badequalitytest2()
+                else:
+                    pass
 
 
 
