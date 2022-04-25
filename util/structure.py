@@ -1,7 +1,7 @@
 from _collections_abc import MutableMapping
 from collections import OrderedDict
 import unittest
-
+from pprint import pprint
 
 _allClasses = {}
 
@@ -34,13 +34,14 @@ class Klass():
     # para encontrar la clase de la que hereda
 
     def __init__(self, name, inherits="Object"):
+        print("Creating class", name)
         self.name = name
         self.inherits = inherits
         if self.name != "Object":
             self.validHierarchy()
 
-        self.attributes = SymbolTable()
-        self.methods = SymbolTable()
+        self.attributes = SymbolTable()  # nombre -> tipo, strings
+        self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
 
     def validHierarchy(self):

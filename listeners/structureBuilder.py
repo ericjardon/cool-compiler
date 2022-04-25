@@ -5,15 +5,21 @@ from antlr.coolParser import coolParser
 from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn
 from util.structure import *
 from util.structure import _allClasses as classDict
-
 class structureBuilder(coolListener):
 
-    objectClass = Klass("Object", None)
-    setBaseKlasses()
+    def __init__(self) -> None:
+        classDict.clear()          
+        Klass("Object", None)
+        setBaseKlasses()  # Int, Bool, String, IO
     
     def enterKlass(self, ctx: coolParser.KlassContext):
-        
+       
         name = ctx.TYPE(0).getText()
+        print("Enter class", name)
+        print(list(classDict.keys())) 
+        if name in classDict:
+            print("Name exists:", name)
+            raise redefinedclass()
 
         inheritance = None
 

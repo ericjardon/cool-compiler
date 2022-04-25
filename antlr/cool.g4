@@ -31,13 +31,13 @@ expr
     | expr ( '@' TYPE )? '.' ID '(' ( params+=expr  ( ',' params+=expr)* )? ')'
     | '˜' expr
     | ISVOID expr
-    | expr '*' expr
-    | expr '/' expr
-    | expr '+' expr
-    | expr '-' expr
-    | expr '<' expr
-    | expr '<=' expr
-    | expr '=' expr
+    | expr '*' expr  # multiplication
+    | expr '/' expr  # division
+    | expr '+' expr  # addition
+    | expr '-' expr  # subtraction
+    | expr '<' expr  # less_than
+    | expr '<=' expr # less_or_equal 
+    | expr '=' expr  # equals
     | 'not' expr
     | <assoc=right> ID '<-' expr
     ;
