@@ -19,18 +19,18 @@ formal
 
 expr
     :
-    primary
-    | ID '(' ( params+=expr ( ',' params+=expr)* )? ')'
-    | IF expr THEN expr ELSE expr FI
-    | WHILE expr LOOP expr POOL
-    | expr '.' ID '(' ( params+=expr  ( ',' params+=expr)* )? ')'
-    | LET let_decl ( ',' let_decl )* IN expr
-    | CASE expr OF (case_stat)+ ESAC
-    | NEW TYPE
-    | '{' ( expr ';' )+ '}'
-    | expr ( '@' TYPE )? '.' ID '(' ( params+=expr  ( ',' params+=expr)* )? ')'
-    | '˜' expr
-    | ISVOID expr
+    primary  # primary_expr
+    | ID '(' ( params+=expr ( ',' params+=expr)* )? ')'  # method_call
+    | IF expr THEN expr ELSE expr FI  # if_else
+    | WHILE expr LOOP expr POOL  # while
+    | expr '.' ID '(' ( params+=expr  ( ',' params+=expr)* )? ')'  # dispatch
+    | LET let_decl ( ',' let_decl )* IN expr  # let_expr
+    | CASE expr OF (case_stat)+ ESAC  # case_expr
+    | NEW TYPE  # new
+    | '{' ( expr ';' )+ '}'  # block
+    | expr ( '@' TYPE )? '.' ID '(' ( params+=expr  ( ',' params+=expr)* )? ')'  #static_dispatch
+    | '˜' expr  # number_egation
+    | ISVOID expr  # isvoid
     | expr '*' expr  # multiplication
     | expr '/' expr  # division
     | expr '+' expr  # addition
@@ -38,8 +38,8 @@ expr
     | expr '<' expr  # less_than
     | expr '<=' expr # less_or_equal 
     | expr '=' expr  # equals
-    | 'not' expr
-    | <assoc=right> ID '<-' expr
+    | 'not' expr  # not
+    | <assoc=right> ID '<-' expr  #assignment
     ;
 
 case_stat:
