@@ -14,8 +14,8 @@ def lookupClass(name):
 
 class Method():
     """
-    Se usa una tabla de sÃ­mbolos lineal para
-    almacenar los tipos de los parÃ¡metros.
+    Se usa una tabla de símbolos lineal para
+    almacenar los tipos de los parámetros.
     """
     def __init__(self, type, params=None):
         self.type = type
@@ -23,10 +23,11 @@ class Method():
         if params:
             for x, y in params:
                 self.params[x] = y
+    # TODO: Maybe add a compareTo method, so it is not limited to object reference.
 
 class Klass():
     """
-    AgrupaciÃ³n de features (atributos y mÃ©todos).
+    Agrupación de features (atributos y métodos).
     """
 
     # Ojo, variable de clase no de instancia
@@ -53,7 +54,7 @@ class Klass():
 
     def addAttribute(self, name, type):
         try:
-            # Busco el atributo, si no estÃ¡ (excepciÃ³n), puedo agregarlo
+            # Busco el atributo, si no está (excepción), puedo agregarlo
             self.lookupAttribute(name)
             raise KeyError(name)
         except KeyError:
@@ -65,7 +66,7 @@ class Klass():
     def lookupAttribute(self, name):
         """
         Buscar un atributo en una clase, si no se encuentra, resolver
-        por herencia (hasta Object donde da error si no estÃ¡ el attributo)
+        por herencia (hasta Object donde da error si no está el attributo)
         """
         if name in self.attributes:
             return self.attributes[name]
@@ -84,21 +85,35 @@ class Klass():
 
     def conforms(self, B):
         """
-        self <= B, esto es, puedo asignar a una variable de esta clase
-        un objeto de tipo B? De otro modo, es B de la misma clase que self o
-        mÃ¡s particular?
+        Return True if B conforms to this class, False otherwise.
+        If B conforms to this (B <= self), then we can assign an instance of B to a variable of this class type.
+        tldr; checks if this class is an ancestor of B
         """
+        if B.name == self.name:  # any class conforms to itself
+            return True
         if B.name == 'Object':
             return False
-        if B.name == self.name:
-            return True
         else:
             return self.conforms(lookupClass(B.inherits))
+    
+    def conformsTo(self, B):
+        """
+        Return True if this class conforms to B, False otherwise.
+        If this class conforms to B, we can assign an instance of this class to a variable of type B.
+        tldr; checks if B is an ancestor of this class.
+        """
+        if self.name == B.name:
+            return True
+        if self.name == 'Object':
+            return False
+        
+        # Recursively look up the tree.
+        return _allClasses[self.inherits].conformsTo(B)
         
 class SymbolTable(MutableMapping):
     """
     La diferencia entre una tabla de sÃ­mbolos y un dict es que si la
-    llave ya estÃ¡ en la tabla, entonces se debe lanzar excepciÃ³n.
+    llave ya está en la tabla, entonces se debe lanzar excepción.
     """
     def __init__(self):
         self.dict = OrderedDict()
@@ -107,7 +122,7 @@ class SymbolTable(MutableMapping):
         return self.dict[key]
 
     def __setitem__(self, key, value):
-        """AquÃ­, si key ya estÃ¡, regresar excepciÃ³n"""
+        """AquÃ­, si key ya está, regresar excepción"""
         if key in self.dict:
             raise KeyError(key)
         self.dict[key] = value 
@@ -127,7 +142,7 @@ class SymbolTable(MutableMapping):
 
 class SymbolTableWithScopes(MutableMapping):
     """
-    Esta versiÃ³n de tabla de sÃ­mbolos maneja scopes mediante una pila,
+    Esta versión de tabla de sÃ­mbolos maneja scopes mediante una pila,
     guarda en el scope activo y busca en los superiores.
     """
     def __init__(self, klass):
@@ -170,14 +185,14 @@ class SymbolTableWithScopes(MutableMapping):
 
 class PruebasDeEstructura(unittest.TestCase):
     def setUp(self):
-        Klass("Object", None)
+        Klass("Object", None)  # so Object class exists in class store
         self.k = [Klass("A"), Klass("B", "A"), Klass("C", "B"), Klass("Z", "B")]
 
     def test1(self):
         self.k[0].addAttribute("a", "Integer")
         self.assertTrue(self.k[0].lookupAttribute("a") == "Integer")
 
-    # BÃºsqueda por herencia
+    # Búsqueda por herencia
     def test2(self):
         self.k[0].addAttribute("a", "Integer")
         self.assertTrue(self.k[1].lookupAttribute("a") == "Integer")
@@ -210,11 +225,11 @@ class PruebasDeEstructura(unittest.TestCase):
         self.assertFalse(self.k[2].conforms(self.k[1]))
 
 class PruebasConTablaLineal(unittest.TestCase):
-    # Corre antes de cada mÃ©todo de prueba
+    # Corre antes de cada método de prueba
     def setUp(self):
         self.st = SymbolTable()
 
-    # Corre despuÃ©s de cada mÃ©todo de prueba
+    # Corre después de cada método de prueba
     def tearDown(self):
         self.st = None
 
@@ -300,7 +315,7 @@ class BaseKlasses(unittest.TestCase):
 
 
 '''
-Mandar llamar a setBaseKlasses() para crear las declaraciones de las 5 clases bÃ¡sicas
+Mandar llamar a setBaseKlasses() para crear las declaraciones de las 5 clases básicas
 '''
 def setBaseKlasses():
     k = Klass('Object')
@@ -327,5 +342,5 @@ def setBaseKlasses():
 if __name__ == '__main__':
     unittest.main(verbosity=2)
     '''Para correr estas pruebas unitarias se puede simplemente pytest structure.py
-       Pytest las encuentra aunque estÃ¡n hechas al estilo unittest! QuÃ© bonito es Python ;,,,,D
+       Pytest las encuentra aunque están hechas al estilo unittest! Qué bonito es Python ;,,,,D
     '''
