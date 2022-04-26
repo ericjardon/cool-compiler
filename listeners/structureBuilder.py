@@ -15,7 +15,14 @@ def getCurrentScope(ctx: ParseTree) -> SymbolTableWithScopes:
     
     return p.objectEnv, p.activeClass
 
+valid_self_type_returns = ["SELF_TYPE", "self"]
+
 class structureBuilder(coolListener):
+
+
+    
+    objectClass = Klass("Object", None)
+    setBaseKlasses()
 
     basicTypes = set(['Int','String','Bool'])
 
@@ -23,6 +30,7 @@ class structureBuilder(coolListener):
         classDict.clear()          
         Klass("Object", None)
         setBaseKlasses()  # Int, Bool, String, IO
+
     
     def enterKlass(self, ctx: coolParser.KlassContext):
        
@@ -64,7 +72,7 @@ class structureBuilder(coolListener):
 
         if (return_type == "SELF_TYPE"):
             checkClass = ctx.expr().TYPE().getText()
-            if checkClass != "SELF_TYPE":
+            if checkClass not in valid_self_type_returns:
                 raise selftypebadreturn()
 
         if (return_type != "SELF_TYPE"):
