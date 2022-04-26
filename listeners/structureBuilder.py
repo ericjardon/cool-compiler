@@ -2,7 +2,7 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import badwhilebody, badwhilecond, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import baddispatch, badwhilebody, badwhilecond, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -167,7 +167,7 @@ class structureBuilder(coolListener):
             if caller == 'Int':
                 raise badwhilebody()
             else: 
-                raise Exception(f"{caller} object does not have a method {methodName}")
+                raise baddispatch(f"{caller} object does not have method '{methodName}'")
 
     
     def exitWhile(self, ctx:coolParser.WhileContext):
@@ -178,8 +178,14 @@ class structureBuilder(coolListener):
         if predicate.dataType != 'Bool':
             raise badwhilecond("While predicate must evaluate to a Bool value")
         
+    def enterLet_expr(self, ctx:coolParser.Let_exprContext):
+        # Parent node to Let_decl
+        pass
 
-
+    def enterLet_decl(self, ctx:coolParser.Let_declContext):
+        # Store the variable in current Scope
+        objectEnv, activeClass = getCurrentScope(ctx)
+        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
 
 

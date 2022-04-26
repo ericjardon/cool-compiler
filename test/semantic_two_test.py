@@ -4,13 +4,13 @@ from main import dummy
 from main import compile
 from util.exceptions import *
 
-# def test_badarith():
-#     with pytest.raises(badarith):
-#         compile('resources/semantic/input/badarith.cool')
+def test_badarith():
+    with pytest.raises(badarith):
+        compile('resources/semantic/input/badarith.cool')
 
-# def test_baddispatch():
-#     with pytest.raises(baddispatch):
-#         compile('resources/semantic/input/baddispatch.cool')
+def test_baddispatch():
+    with pytest.raises(baddispatch):
+        compile('resources/semantic/input/baddispatch.cool')
 
 def test_badequalitytest():
     with pytest.raises(badequalitytest):
@@ -28,17 +28,17 @@ def test_badwhilecond():
     with pytest.raises(badwhilecond):
         compile('resources/semantic/input/badwhilecond.cool')
 
-# def test_caseidenticalbranch():
-#     with pytest.raises(caseidenticalbranch):
-#         compile('resources/semantic/input/caseidenticalbranch.cool')
+def test_caseidenticalbranch():
+    with pytest.raises(caseidenticalbranch):
+        compile('resources/semantic/input/caseidenticalbranch.cool')
 
-# def test_missingclass():
-#     with pytest.raises(missingclass):
-#         compile('resources/semantic/input/missingclass.cool')
+def test_missingclass():
+    with pytest.raises(missingclass):
+        compile('resources/semantic/input/missingclass.cool')
 
-# def test_outofscope():
-#     with pytest.raises(outofscope):
-#         compile('resources/semantic/input/outofscope.cool')
+def test_outofscope():
+    with pytest.raises(outofscope):
+        compile('resources/semantic/input/outofscope.cool')
 
 def test_redefinedclass():
     with pytest.raises(redefinedclass):
