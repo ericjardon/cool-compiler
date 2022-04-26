@@ -2,7 +2,7 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import baddispatch, badwhilebody, badwhilecond, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -10,10 +10,10 @@ from antlr4.tree.Tree import ParseTree
 
 def getCurrentScope(ctx: ParseTree) -> SymbolTableWithScopes:
     p = ctx.parentCtx
-    while (p and not hasattr(p, 'objectEnv')):
+    while (p and not hasattr(p, 'objectEnv') and not hasattr(p, 'activeClass')):
         p = p.parentCtx
     
-    return p.objectEnv
+    return p.objectEnv, p.activeClass
 
 valid_self_type_returns = ["SELF_TYPE", "self"]
 
@@ -125,12 +125,12 @@ class structureBuilder(coolListener):
             ctx.dataType = 'String'
         elif ctx.TRUE() or ctx.FALSE():
             ctx.dataType = 'Bool'
-        elif ctx.ID():  # is a variable name
-            objectEnv = getCurrentScope(ctx)
+        elif ctx.ID():  # is a variable name, assign type from scope
+            objectEnv, activeClass = getCurrentScope(ctx)
             
-            # print(f"primary expr !! {ctx.ID()} in class:", p.activeClass.name)
+            # print(f"primary expr !! {ctx.ID()} in class:", activeClass.name)
             # print("var bindings here:")
-            # pprint(p.objectEnv)
+            # pprint(objectEnv)
             ctx.dataType = objectEnv[ctx.ID().getText()]
             print('ID datatype', ctx.dataType)
 
@@ -152,12 +152,40 @@ class structureBuilder(coolListener):
                 else:
                     raise badequalitytest()  # any type discrepancy should throw error
     
-    def enterDispatch(self, ctx:coolParser.DispatchContext):
-        print("dispatch")
-        caller = ctx.getChild(0).getText()  # first expr node
-        # assume caller exists in current scope
+    def exitDispatch(self, ctx:coolParser.DispatchContext):
+        # Check validity of the dispatch: method must be defined, types must conform
+        caller = ctx.getChild(0).dataType # get type of calling expression
+        k = lookupClass(caller)
+        
         print("calling object <",caller,">")
+        methodName = ctx.ID().getText()
+        print("method name", methodName)
+        try:
+            method = k.lookupMethod(methodName)
+            # then compare formal params
+        except KeyError:
+            if caller == 'Int':
+                raise badwhilebody()
+            else: 
+                raise baddispatch(f"{caller} object does not have method '{methodName}'")
 
+    
+    def exitWhile(self, ctx:coolParser.WhileContext):
+        # all subexpressions of while have been evaluated.
+
+        # check that condition evaluates to a boolean
+        predicate = ctx.expr()[0]
+        if predicate.dataType != 'Bool':
+            raise badwhilecond("While predicate must evaluate to a Bool value")
+        
+    def enterLet_expr(self, ctx:coolParser.Let_exprContext):
+        # Parent node to Let_decl
+        pass
+
+    def enterLet_decl(self, ctx:coolParser.Let_declContext):
+        # Store the variable in current Scope
+        objectEnv, activeClass = getCurrentScope(ctx)
+        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
 
 
