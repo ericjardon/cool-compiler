@@ -1,7 +1,7 @@
 from _collections_abc import MutableMapping
 from collections import OrderedDict
 import unittest
-
+from pprint import pprint
 
 _allClasses = {}
 
@@ -34,13 +34,14 @@ class Klass():
     # para encontrar la clase de la que hereda
 
     def __init__(self, name, inherits="Object"):
+
         self.name = name
         self.inherits = inherits
         if self.name != "Object":
             self.validHierarchy()
 
-        self.attributes = SymbolTable()
-        self.methods = SymbolTable()
+        self.attributes = SymbolTable()  # nombre -> tipo, strings
+        self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
 
     def validHierarchy(self):
@@ -75,7 +76,7 @@ class Klass():
         else:
             return _allClasses[self.inherits].lookupAttribute(name)
 
-    def lookupMethod(self, name):
+    def lookupMethod(self, name: str) -> Method:
         if name in self.methods:
             return self.methods[name]
         elif self.name == "Object":
@@ -145,7 +146,7 @@ class SymbolTableWithScopes(MutableMapping):
     Esta versión de tabla de sÃ­mbolos maneja scopes mediante una pila,
     guarda en el scope activo y busca en los superiores.
     """
-    def __init__(self, klass):
+    def __init__(self, klass: Klass):
         self.dict_list = [{}]
         self.last = 0
         self.klass = klass
@@ -154,6 +155,7 @@ class SymbolTableWithScopes(MutableMapping):
         for i in reversed(range(self.last+1)):
             if key in self.dict_list[i].keys():
                 return self.dict_list[i][key]
+        # If it is not in any of the scopes, look in class definition
         return self.klass.lookupAttribute(key)
         # Never reached
         raise KeyError(key)
