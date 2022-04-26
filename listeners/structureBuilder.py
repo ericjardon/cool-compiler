@@ -5,8 +5,15 @@ from antlr.coolParser import coolParser
 from util.exceptions import missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
-
+from antlr4.tree.Tree import ParseTree
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
+
+def getCurrentScope(ctx: ParseTree) -> SymbolTableWithScopes:
+    p = ctx.parentCtx
+    while (p and not hasattr(p, 'objectEnv')):
+        p = p.parentCtx
+    
+    return p.objectEnv
 
 class structureBuilder(coolListener):
 
@@ -111,14 +118,12 @@ class structureBuilder(coolListener):
         elif ctx.TRUE() or ctx.FALSE():
             ctx.dataType = 'Bool'
         elif ctx.ID():  # is a variable name
-            p = ctx.parentCtx
-            while (p and not hasattr(p, 'objectEnv')):
-                p = p.parentCtx
+            objectEnv = getCurrentScope(ctx)
             
             # print(f"primary expr !! {ctx.ID()} in class:", p.activeClass.name)
             # print("var bindings here:")
             # pprint(p.objectEnv)
-            ctx.dataType = p.objectEnv[ctx.ID().getText()]
+            ctx.dataType = objectEnv[ctx.ID().getText()]
             print('ID datatype', ctx.dataType)
 
         else:
@@ -138,6 +143,12 @@ class structureBuilder(coolListener):
                     raise badequalitytest2()
                 else:
                     raise badequalitytest()  # any type discrepancy should throw error
+    
+    def enterDispatch(self, ctx:coolParser.DispatchContext):
+        print("dispatch")
+        caller = ctx.getChild(0).getText()  # first expr node
+        # assume caller exists in current scope
+        print("calling object <",caller,">")
 
 
 
