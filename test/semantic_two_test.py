@@ -12,13 +12,13 @@ from util.exceptions import *
 #     with pytest.raises(baddispatch):
 #         compile('resources/semantic/input/baddispatch.cool')
 
-# def test_badequalitytest():
-#     with pytest.raises(badequalitytest):
-#         compile('resources/semantic/input/badequalitytest.cool')
+def test_badequalitytest():
+    with pytest.raises(badequalitytest):
+        compile('resources/semantic/input/badequalitytest.cool')
 
-# def test_badequalitytest2():
-#     with pytest.raises(badequalitytest2):
-#         compile('resources/semantic/input/badequalitytest2.cool')
+def test_badequalitytest2():
+    with pytest.raises(badequalitytest2):
+        compile('resources/semantic/input/badequalitytest2.cool')
 
 def test_badwhilebody():
     with pytest.raises(badwhilebody):
@@ -40,14 +40,14 @@ def test_badwhilecond():
 #     with pytest.raises(outofscope):
 #         compile('resources/semantic/input/outofscope.cool')
 
-# def test_redefinedclass():
-#     with pytest.raises(redefinedclass):
-#         compile('resources/semantic/input/redefinedclass.cool')
+def test_redefinedclass():
+    with pytest.raises(redefinedclass):
+        compile('resources/semantic/input/redefinedclass.cool')
 
-# def test_returntypenoexist():
-#     with pytest.raises(returntypenoexist):
-#         compile('resources/semantic/input/returntypenoexist.cool')
+def test_returntypenoexist():
+    with pytest.raises(returntypenoexist):
+        compile('resources/semantic/input/returntypenoexist.cool')
 
-# def test_selftypebadreturn():
-#     with pytest.raises(selftypebadreturn):
-#         compile('resources/semantic/input/selftypebadreturn.cool')
+def test_selftypebadreturn():
+    with pytest.raises(selftypebadreturn):
+        compile('resources/semantic/input/selftypebadreturn.cool')
