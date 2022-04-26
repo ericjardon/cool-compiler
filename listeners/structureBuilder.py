@@ -2,7 +2,7 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -113,7 +113,7 @@ class structureBuilder(coolListener):
         present_types = []
 
         for case in cases:
-            case_type = str(case.TYPE())
+            case_type = case.TYPE().getText()
             if case_type in present_types:
                 raise caseidenticalbranch()
             present_types.append(case_type)
@@ -136,12 +136,13 @@ class structureBuilder(coolListener):
             ctx.dataType = 'Bool'
         elif ctx.ID():  # is a variable name, assign type from scope
             objectEnv, activeClass = getCurrentScope(ctx)
+
+            # Look for variable in this scope, if it doesn't exist, raise out of scope exception
+            try :
+                ctx.dataType = objectEnv[ctx.ID().getText()]
+            except KeyError:
+                raise outofscope()
             
-            # print(f"primary expr !! {ctx.ID()} in class:", activeClass.name)
-            # print("var bindings here:")
-            # pprint(objectEnv)
-            ctx.dataType = objectEnv[ctx.ID().getText()]
-            print('ID datatype', ctx.dataType)
 
         else:
             # is a subexpression, implement type checking for generic expressions
@@ -181,18 +182,29 @@ class structureBuilder(coolListener):
         left_type = ctx.expr(0).dataType
         right_type = ctx.expr(1).dataType
 
-        if left_type != right_type:
+        if left_type != "Int" or right_type != "Int":
             raise badarith()
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
         left_type = ctx.expr(0).dataType
         right_type = ctx.expr(1).dataType
 
-        if left_type != right_type:
+        if left_type != "Int" or right_type != "Int":
             raise badarith()
-
     
+    def exitDivision(self, ctx: coolParser.DivisionContext):
+        left_type = ctx.expr(0).dataType
+        right_type = ctx.expr(1).dataType
 
+        if left_type != "Int" or right_type != "Int":
+            raise badarith()
+    
+    def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
+        left_type = ctx.expr(0).dataType
+        right_type = ctx.expr(1).dataType
+
+        if left_type != "Int" or right_type != "Int":
+            raise badarith()
 
     def exitWhile(self, ctx:coolParser.WhileContext):
         # all subexpressions of while have been evaluated.
@@ -204,7 +216,13 @@ class structureBuilder(coolListener):
         
     def enterLet_expr(self, ctx:coolParser.Let_exprContext):
         # Parent node to Let_decl
-        pass
+        object_env, active_class = getCurrentScope(ctx)
+        object_env.openScope()
+        body = ctx.expr()
+
+    def exitLet_expr(self, ctx: coolParser.Let_exprContext):
+        object_env, active_class = getCurrentScope(ctx)
+        object_env.closeScope()
 
     def enterLet_decl(self, ctx:coolParser.Let_declContext):
         # Store the variable in current Scope
