@@ -6,8 +6,11 @@ from util.exceptions import missingclass, redefinedclass, returntypenoexist, sel
 from util.structure import *
 from util.structure import _allClasses as classDict
 
+valid_self_type_returns = ["SELF_TYPE", "self"]
+
 class structureBuilder(coolListener):
 
+    
     objectClass = Klass("Object", None)
     setBaseKlasses()
     
@@ -43,7 +46,7 @@ class structureBuilder(coolListener):
 
         if (return_type == "SELF_TYPE"):
             checkClass = ctx.expr().TYPE().getText()
-            if checkClass != "SELF_TYPE":
+            if checkClass not in valid_self_type_returns:
                 raise selftypebadreturn()
 
         if (return_type != "SELF_TYPE"):
