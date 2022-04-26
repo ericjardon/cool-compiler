@@ -2,7 +2,7 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import baddispatch, badwhilebody, badwhilecond, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -108,6 +108,16 @@ class structureBuilder(coolListener):
         type = ctx.TYPE().getText()
         ctx.activeClass.addAttribute(name, type)
 
+    def enterCase_expr(self, ctx: coolParser.Case_exprContext):
+        cases = ctx.case_stat()
+        present_types = []
+
+        for case in cases:
+            case_type = str(case.TYPE())
+            if case_type in present_types:
+                raise caseidenticalbranch()
+            present_types.append(case_type)
+
     def exitPrimary_expr(self, ctx:coolParser.Primary_exprContext):
          # Has a single Primary child node. fetch its dataType and pass on to parent
         primary = ctx.getChild(0)
@@ -117,7 +127,6 @@ class structureBuilder(coolListener):
             print(primary.__dict__)
             print(f"Primary expression {ctx.getText()} has no datatype")
 
-    
     def enterPrimary(self, ctx: coolParser.PrimaryContext):
         if ctx.INTEGER():
             ctx.dataType = 'Int'
@@ -141,7 +150,6 @@ class structureBuilder(coolListener):
     def exitEquals(self, ctx: coolParser.EqualsContext):
         typeOne = ctx.children[0].dataType
         typeTwo = ctx.children[2].dataType
-        print("Types to compare", typeOne, typeTwo)
 
         if typeOne in self.basicTypes and typeTwo in self.basicTypes:
             if typeOne != typeTwo:
@@ -169,7 +177,23 @@ class structureBuilder(coolListener):
             else: 
                 raise baddispatch(f"{caller} object does not have method '{methodName}'")
 
+    def exitAddition(self, ctx: coolParser.AdditionContext):
+        left_type = ctx.expr(0).dataType
+        right_type = ctx.expr(1).dataType
+
+        if left_type != right_type:
+            raise badarith()
+
+    def exitSubtraction(self, ctx: coolParser.SubtractionContext):
+        left_type = ctx.expr(0).dataType
+        right_type = ctx.expr(1).dataType
+
+        if left_type != right_type:
+            raise badarith()
+
     
+
+
     def exitWhile(self, ctx:coolParser.WhileContext):
         # all subexpressions of while have been evaluated.
 

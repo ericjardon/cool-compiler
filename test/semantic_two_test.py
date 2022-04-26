@@ -5,21 +5,12 @@ from main import compile
 from util.exceptions import *
 
 def test_badarith():
-<<<<<<< HEAD
      with pytest.raises(badarith):
          compile('resources/semantic/input/badarith.cool')
 
 def test_baddispatch():
      with pytest.raises(baddispatch):
          compile('resources/semantic/input/baddispatch.cool')
-=======
-    with pytest.raises(badarith):
-        compile('resources/semantic/input/badarith.cool')
-
-def test_baddispatch():
-    with pytest.raises(baddispatch):
-        compile('resources/semantic/input/baddispatch.cool')
->>>>>>> 068055147dc1fe23deaffbd96641af3880badcb5
 
 def test_badequalitytest():
     with pytest.raises(badequalitytest):
