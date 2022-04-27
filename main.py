@@ -3,6 +3,7 @@ from antlr.coolLexer import coolLexer
 from antlr.coolParser import coolParser
 
 from listeners.basicSemanticCheck import basicSemanticListener
+from listeners.structureBuilder import structureBuilder
 
 def compile(file):
     parser = coolParser(CommonTokenStream(coolLexer(FileStream(file))))
@@ -11,6 +12,9 @@ def compile(file):
     walker = ParseTreeWalker()
     
     walker.walk(basicSemanticListener(), tree)
+    
+    walker.walk(structureBuilder(), tree)
+    
 
 
 def dummy():
