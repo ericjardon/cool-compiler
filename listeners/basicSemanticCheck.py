@@ -38,9 +38,13 @@ class basicSemanticListener(coolListener):
         if(ctx.ID().getText() == "self"):
             raise anattributenamedself("Self is a reserved keyword")
         if ctx.expr():
-            if ctx.expr().primary():
-                if ctx.expr().primary().getText() == 'self':
-                    raise selfassignment()
+            try:
+                if ctx.expr().primary():
+                    if ctx.expr().primary().getText() == 'self':
+                        raise selfassignment()
+            except AttributeError:
+                # The assignment expression is not a primary
+                pass
 
     def enterLet_decl(self, ctx: coolParser.Let_declContext):
         # For every ID check that it is not == 'self'
