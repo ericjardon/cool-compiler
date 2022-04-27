@@ -2,7 +2,11 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
+<<<<<<< HEAD
 from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+=======
+from util.exceptions import assignnoconform, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+>>>>>>> 9429bab97c63920941f15d677d824f7dc23f313d
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -110,7 +114,8 @@ class structureBuilder(coolListener):
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
         name = ctx.ID().getText()
         type = ctx.TYPE().getText()
-        ctx.activeClass.addAttribute(name, type)
+        ctx.activeClass.addAttribute(name, type)  # we can call lookupAttribute later
+
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
@@ -233,4 +238,24 @@ class structureBuilder(coolListener):
         objectEnv, activeClass = getCurrentScope(ctx)
         objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
+<<<<<<< HEAD
      
+=======
+
+
+    def enterNew(self, ctx:coolParser.NewContext):
+        # Store the TYPE and return it to parent
+        ctx.dataType == ctx.TYPE()
+
+    def exitAssignment(self, ctx:coolParser.AssignmentContext):
+        # receive the dataType from the child node
+        value = ctx.expr().dataType
+        variable = ctx.ID().getText()
+
+        # value tiene que ser un hijo o una instancia de value,
+        # es decir, value must conform to variable
+        try:
+            lookupClass(value).conformsTo(lookupClass(variable))
+        except:
+            raise assignnoconform()
+>>>>>>> 9429bab97c63920941f15d677d824f7dc23f313d
