@@ -2,7 +2,7 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -64,8 +64,12 @@ class structureBuilder(coolListener):
         name = ctx.ID().getText()
 
         parameters = []
+        names = []
 
         for param in ctx.params:
+            if param.ID().getText() in names:
+                raise dupformals()
+            names.append(param.ID().getText())
             parameters.append((param.ID().getText(), param.TYPE().getText()))
         
         return_type = ctx.TYPE().getText()
@@ -229,6 +233,4 @@ class structureBuilder(coolListener):
         objectEnv, activeClass = getCurrentScope(ctx)
         objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
-
-
-
+     
