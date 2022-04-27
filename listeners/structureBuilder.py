@@ -2,11 +2,8 @@ from ctypes import util
 from pprint import pprint
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-<<<<<<< HEAD
-from util.exceptions import badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
-=======
-from util.exceptions import assignnoconform, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
->>>>>>> 9429bab97c63920941f15d677d824f7dc23f313d
+
+from util.exceptions import assignnoconform, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
@@ -238,11 +235,6 @@ class structureBuilder(coolListener):
         objectEnv, activeClass = getCurrentScope(ctx)
         objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
-<<<<<<< HEAD
-     
-=======
-
-
     def enterNew(self, ctx:coolParser.NewContext):
         # Store the TYPE and return it to parent
         ctx.dataType == ctx.TYPE()
@@ -258,4 +250,4 @@ class structureBuilder(coolListener):
             lookupClass(value).conformsTo(lookupClass(variable))
         except:
             raise assignnoconform()
->>>>>>> 9429bab97c63920941f15d677d824f7dc23f313d
+
