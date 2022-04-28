@@ -1,6 +1,4 @@
-from typing import Tuple
-
-from importlib_metadata import Pair
+from typing import Tuple, List
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
@@ -11,7 +9,7 @@ from util.structure import _allClasses as classDict
 
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
 
-def getCurrentScope(ctx: ParseTree) -> Pair(SymbolTableWithScopes, Klass):
+def getCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes, Klass]:
     p = ctx.parentCtx
     while (p and not hasattr(p, 'objectEnv') and not hasattr(p, 'activeClass')):
         p = p.parentCtx
@@ -26,6 +24,18 @@ class typeChecker(coolListener):
     '''
 
     basicTypes = set(['Int','String','Bool'])
+
+    def checkArgsParams(self, args: List[coolParser.ExprContext], method: Method, methodName:str):
+        if len(args) != len(method.params):
+            raise Exception(f"Bad call to {methodName}: {len(args)} arguments provided, {len(method.params)} expected")
+
+        # Check arguments against their type
+        param_names = list(method.params)
+        for i, arg in enumerate(args):
+            if lookupClass(arg.dataType).conformsTo(lookupClass(method.params[param_names[i]])):
+                continue
+            else:
+                raise badargs1(f"Incorrect argument {arg.getText()} for parameter {param_names[i]}")
 
     def __init__(self) -> None:
         print("Classes of Program")
@@ -148,7 +158,8 @@ class typeChecker(coolListener):
             else: 
                 raise baddispatch(f"{caller} object does not have method '{methodName}'")
         
-        if len(ctx.params) != len(method.params):
+        # BEGIN ARGS/PARAMS CHECK
+        '''if len(ctx.params) != len(method.params):
             raise Exception(f"Bad call to {methodName}: {len(ctx.params)} arguments provided, {len(method.params)} expected")
 
         # Check arguments against their type
@@ -157,7 +168,8 @@ class typeChecker(coolListener):
             if lookupClass(arg.dataType).conformsTo(lookupClass(method.params[param_names[i]])):
                 continue
             else:
-                raise badargs1(f"Incorrect argument {arg.getText()} for parameter {param_names[i]}")
+                raise badargs1(f"Incorrect argument {arg.getText()} for parameter {param_names[i]}")'''
+        self.checkArgsParams(args=ctx.params, method=method, methodName=methodName)
 
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType
@@ -252,3 +264,7 @@ class typeChecker(coolListener):
         # rightSide must conform to leftSide        
         if not rightKlass.conformsTo(leftKlass):
             raise assignnoconform
+
+    # def exitStatic_dispatch(self, ctx:coolParser.Static_dispatchContext):
+
+
