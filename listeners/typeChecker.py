@@ -4,7 +4,7 @@ from importlib_metadata import Pair
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
-from util.exceptions import assignnoconform, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from antlr4.tree.Tree import ParseTree
 from util.structure import _allClasses as classDict
@@ -148,7 +148,16 @@ class typeChecker(coolListener):
             else: 
                 raise baddispatch(f"{caller} object does not have method '{methodName}'")
         
+        if len(ctx.params) != len(method.params):
+            raise Exception(f"Bad call to {methodName}: {len(ctx.params)} arguments provided, {len(method.params)} expected")
+
         # Check arguments against their type
+        param_names = list(method.params)
+        for i, arg in enumerate(ctx.params):
+            if lookupClass(arg.dataType).conformsTo(lookupClass(method.params[param_names[i]])):
+                continue
+            else:
+                raise badargs1(f"Incorrect argument {arg.getText()} for parameter {param_names[i]}")
 
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType

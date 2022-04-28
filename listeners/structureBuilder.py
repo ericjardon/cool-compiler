@@ -86,11 +86,11 @@ class structureBuilder(coolListener):
         if len(parameters) == 0 :
             newMethod = Method(return_type)
         else:
-            print("Method with params", parameters)
             newMethod = Method(return_type, parameters)
         
         ctx.activeClass.addMethod(name, newMethod)
 
+        # Job of typeChecker now:
         # Add parameter type bindings in the object scope
         # ctx.objectEnv.openScope()
         # for id, type in parameters:
