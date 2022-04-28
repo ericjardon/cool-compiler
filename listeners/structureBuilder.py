@@ -10,12 +10,22 @@ from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
 
+valid_self_type_returns = ["SELF_TYPE", "self"]
+
+def getActiveClass(ctx: ParseTree) -> Klass:
+    p = ctx.parentCtx
+    while (p and not hasattr(p, 'activeClass')):
+        p = p.parentCtx
+    
+    return p.activeClass
 
 class structureBuilder(coolListener):
     '''
-    Responsible for adding all classes to the _allClasses global dictionary.
+    Responsible for adding all classes to the _allClasses global dictionary,
+    including definitions of attributes and methods.
     We do this before we begin type-checking
     '''
+
     basicTypes = set(['Int','String','Bool'])
 
     def __init__(self) -> None:
@@ -45,3 +55,48 @@ class structureBuilder(coolListener):
 
         else:            
             k = Klass(name=name)
+
+        ctx.activeClass = k
+        for feature in ctx.feature():  # children nodes should know the class to add to
+            feature.activeClass = k
+    
+    def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
+        '''
+        Adds the method to the current active Klass instance
+        and performs self_type return checks
+        '''
+        name = ctx.ID().getText()
+        parameters = []
+        names = []
+
+        for param in ctx.params:
+            if param.ID().getText() in names:
+                raise dupformals()
+            names.append(param.ID().getText())
+            parameters.append((param.ID().getText(), param.TYPE().getText()))
+        
+        return_type = ctx.TYPE().getText()
+
+        if (return_type == "SELF_TYPE"):
+            # Check that class conforms to this class
+            checkClass = ctx.expr().TYPE().getText()
+            if checkClass not in valid_self_type_returns:
+                raise selftypebadreturn()
+
+        if len(parameters) == 0 :
+            newMethod = Method(return_type)
+        else:
+            print("Method with params", parameters)
+            newMethod = Method(return_type, parameters)
+        
+        ctx.activeClass.addMethod(name, newMethod)
+
+        # Add parameter type bindings in the object scope
+        # ctx.objectEnv.openScope()
+        # for id, type in parameters:
+        #     ctx.objectEnv[id] = type
+
+        # body = ctx.expr()
+        # print("Body of method <", body.getText(),'>')
+        # body.objectEnv = ctx.objectEnv
+        # body.activeClass = ctx.activeClass

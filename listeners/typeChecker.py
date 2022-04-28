@@ -1,3 +1,6 @@
+from typing import Tuple
+
+from importlib_metadata import Pair
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
@@ -8,14 +11,13 @@ from util.structure import _allClasses as classDict
 
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
 
-def getCurrentScope(ctx: ParseTree) -> SymbolTableWithScopes:
+def getCurrentScope(ctx: ParseTree) -> Pair(SymbolTableWithScopes, Klass):
     p = ctx.parentCtx
     while (p and not hasattr(p, 'objectEnv') and not hasattr(p, 'activeClass')):
         p = p.parentCtx
     
     return p.objectEnv, p.activeClass
 
-valid_self_type_returns = ["SELF_TYPE", "self"]
 
 class typeChecker(coolListener):
     '''
@@ -42,36 +44,16 @@ class typeChecker(coolListener):
 
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         name = ctx.ID().getText()
+        method = ctx.activeClass.lookupMethod(name)
 
-        parameters = []
-        names = []
-
-        for param in ctx.params:
-            if param.ID().getText() in names:
-                raise dupformals()
-            names.append(param.ID().getText())
-            parameters.append((param.ID().getText(), param.TYPE().getText()))
-        
-        return_type = ctx.TYPE().getText()
-
-        if (return_type == "SELF_TYPE"):
-            checkClass = ctx.expr().TYPE().getText()
-            if checkClass not in valid_self_type_returns:
-                raise selftypebadreturn()
-
-        if (return_type != "SELF_TYPE"):
+        if (method.type != "SELF_TYPE"):
             try:
-                lookupClass(return_type)
+                lookupClass(method.type)
             except KeyError:
-            
                 raise returntypenoexist()
 
-        if len(parameters) == 0 :
-            newMethod = Method(return_type)
-        else:
-            newMethod = Method(return_type, parameters)
-        
-        ctx.activeClass.addMethod(name, newMethod)
+        parameters = list(method.params.items())
+        print(f"METHOD {name}({parameters})")
 
         # Add parameter type bindings in the object scope
         ctx.objectEnv.openScope()
@@ -112,7 +94,7 @@ class typeChecker(coolListener):
             print(primary.__dict__)
             print(f"Primary expression {ctx.getText()} has no datatype")
 
-    def enterPrimary(self, ctx: coolParser.PrimaryContext):
+    def exitPrimary(self, ctx:coolParser.PrimaryContext):
         if ctx.INTEGER():
             ctx.dataType = 'Int'
         elif ctx.STRING():
@@ -121,17 +103,20 @@ class typeChecker(coolListener):
             ctx.dataType = 'Bool'
         elif ctx.ID():  # is a variable name, assign type from scope
             objectEnv, activeClass = getCurrentScope(ctx)
-
+            # Check self keyword
+            if ctx.ID().getText() == 'self':
+                ctx.dataType = activeClass.name
+                return
             # Look for variable in this scope, if it doesn't exist, raise out of scope exception
             try :
                 ctx.dataType = objectEnv[ctx.ID().getText()]
             except KeyError:
                 raise outofscope()
-            
-
         else:
             # is a subexpression, implement type checking for generic expressions
-            pass
+            print("subexpression <",ctx.expr().getText(),">")
+            ctx.dataType = ctx.expr().dataType
+
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
         typeOne = ctx.children[0].dataType
@@ -151,9 +136,9 @@ class typeChecker(coolListener):
         caller = ctx.getChild(0).dataType # get type of calling expression
         k = lookupClass(caller)
         
-        print("calling object <",caller,">")
+        print("caller: <",caller,">")
         methodName = ctx.ID().getText()
-        print("method name", methodName)
+        print("method name:", methodName)
         try:
             method = k.lookupMethod(methodName)
             # then compare formal params
@@ -162,6 +147,8 @@ class typeChecker(coolListener):
                 raise badwhilebody()
             else: 
                 raise baddispatch(f"{caller} object does not have method '{methodName}'")
+        
+        # Check arguments against their type
 
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType
