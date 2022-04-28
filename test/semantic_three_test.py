@@ -48,6 +48,6 @@ def test_letbadinit():
 #     with pytest.raises(signaturechange):
 #         compile('resources/semantic/input/signaturechange.cool')
 
-# def test_trickyatdispatch2():
-#     with pytest.raises(trickyatdispatch2):
-#         compile('resources/semantic/input/trickyatdispatch2.cool')
+def test_trickyatdispatch2():
+    with pytest.raises(trickyatdispatch2):
+        compile('resources/semantic/input/trickyatdispatch2.cool')

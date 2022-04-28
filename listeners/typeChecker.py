@@ -2,7 +2,7 @@ from typing import Tuple, List
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
-from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2, trickyatdispatch2
 from util.structure import *
 from antlr4.tree.Tree import ParseTree
 from util.structure import _allClasses as classDict
@@ -158,18 +158,32 @@ class typeChecker(coolListener):
             else: 
                 raise baddispatch(f"{caller} object does not have method '{methodName}'")
         
-        # BEGIN ARGS/PARAMS CHECK
-        '''if len(ctx.params) != len(method.params):
-            raise Exception(f"Bad call to {methodName}: {len(ctx.params)} arguments provided, {len(method.params)} expected")
-
-        # Check arguments against their type
-        param_names = list(method.params)
-        for i, arg in enumerate(ctx.params):
-            if lookupClass(arg.dataType).conformsTo(lookupClass(method.params[param_names[i]])):
-                continue
-            else:
-                raise badargs1(f"Incorrect argument {arg.getText()} for parameter {param_names[i]}")'''
         self.checkArgsParams(args=ctx.params, method=method, methodName=methodName)
+
+    def exitStatic_dispatch(self, ctx:coolParser.Static_dispatchContext):
+        caller = ctx.getChild(0).dataType 
+        k = lookupClass(caller)
+        
+        print("caller: <",caller,">")
+        methodName = ctx.ID().getText()
+        print("method name:", methodName)
+
+        if ctx.TYPE():
+            # check if conforms to parent type after @
+            parent = lookupClass(ctx.TYPE().getText())
+            if not lookupClass(caller).conformsTo(parent):
+                raise trickyatdispatch2()
+
+        try:
+            method = k.lookupMethod(methodName)
+            # then compare formal params
+        except KeyError:
+            if caller == 'Int':
+                raise badwhilebody()
+            else: 
+                raise baddispatch(f"{caller} object does not have method '{methodName}'")
+
+
 
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType
@@ -251,7 +265,6 @@ class typeChecker(coolListener):
             rightKlass = lookupClass(rightSide)
             leftKlass = lookupClass(leftSide)
         except Exception as e:
-            print(e)
             missing = []
             existing = classDict.keys()
             if rightSide not in existing:
@@ -264,7 +277,3 @@ class typeChecker(coolListener):
         # rightSide must conform to leftSide        
         if not rightKlass.conformsTo(leftKlass):
             raise assignnoconform
-
-    # def exitStatic_dispatch(self, ctx:coolParser.Static_dispatchContext):
-
-
