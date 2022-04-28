@@ -4,7 +4,7 @@ from importlib_metadata import Pair
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
-from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
+from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2
 from util.structure import *
 from antlr4.tree.Tree import ParseTree
 from util.structure import _allClasses as classDict
@@ -208,7 +208,21 @@ class typeChecker(coolListener):
     def enterLet_decl(self, ctx:coolParser.Let_declContext):
         # Store the variable in current Scope
         objectEnv, activeClass = getCurrentScope(ctx)
-        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
+        identifier = ctx.ID().getText()
+        declaredType = ctx.TYPE().getText()
+        objectEnv[identifier] = declaredType
+
+    def exitLet_decl(self, ctx:coolParser.Let_declContext):
+        declaredType = ctx.TYPE().getText()
+        if ctx.expr():  # has initialization
+            try:
+                dataType = ctx.expr().dataType
+                if not lookupClass(dataType).conformsTo(lookupClass(declaredType)):
+                    raise letbadinit(f"Provided {dataType} does not conform to {declaredType}")
+
+            except AttributeError:
+                print(f"{ctx.expr().getText()} expression has no dataType") 
+
 
     def enterNew(self, ctx:coolParser.NewContext):
         # Store the TYPE and return it to parent
