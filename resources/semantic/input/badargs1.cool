@@ -10,4 +10,3 @@ class B inherits A {
       foo(b:B, x:Int) : String { "moo" };
 };
 
-

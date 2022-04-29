@@ -4,6 +4,7 @@ from antlr.coolParser import coolParser
 
 from listeners.basicSemanticCheck import basicSemanticListener
 from listeners.structureBuilder import structureBuilder
+from listeners.typeChecker import typeChecker
 
 def compile(file):
     parser = coolParser(CommonTokenStream(coolLexer(FileStream(file))))
@@ -13,7 +14,9 @@ def compile(file):
     
     walker.walk(basicSemanticListener(), tree)
     
-    walker.walk(structureBuilder(), tree)
+    walker.walk(structureBuilder(), tree)  # build the allClasses dict
+
+    walker.walk(typeChecker(), tree)
     
 
 
