@@ -2,7 +2,7 @@ from typing import Tuple, List
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
-from util.exceptions import assignnoconform, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2, trickyatdispatch2
+from util.exceptions import assignnoconform, attrbadinit, attroverride, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2, trickyatdispatch2
 from util.structure import *
 from antlr4.tree.Tree import ParseTree
 from util.structure import _allClasses as classDict
@@ -82,7 +82,14 @@ class typeChecker(coolListener):
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
         name = ctx.ID().getText()
         type = ctx.TYPE().getText()
-        ctx.activeClass.addAttribute(name, type)  # we can call lookupAttribute later
+        # Look up the atribute in the class hierarchy, if it is found, raise attroverride, otherwise add it to current active class
+        try:
+            ctx.activeClass.lookupAttribute(name)
+            raise attroverride()
+        except KeyError:
+            ctx.activeClass.addAttribute(name, type)  # we can call lookupAttribute later
+
+        
 
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
@@ -117,6 +124,12 @@ class typeChecker(coolListener):
             if ctx.ID().getText() == 'self':
                 ctx.dataType = activeClass.name
                 return
+            # Look for variable in parent classes, if it doesn't exist, raise attrbadinit
+            try:
+                name = ctx.ID().getText()
+                activeClass.lookupAttribute(name)
+            except KeyError:
+                raise attrbadinit()
             # Look for variable in this scope, if it doesn't exist, raise out of scope exception
             try :
                 ctx.dataType = objectEnv[ctx.ID().getText()]
