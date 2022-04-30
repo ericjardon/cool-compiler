@@ -11,6 +11,24 @@ class HierarchyException(Exception):
 def lookupClass(name):
     return _allClasses[name]
 
+def getLeastCommonAncestor(class_one, class_two):
+    class_one_path = set()
+    class_two_path = set()
+    
+    intersection = class_one_path.intersection(class_two_path)
+    
+    while len(intersection) < 1:
+        class_one_path.add(class_one.name)
+        class_one = lookupClass(class_one.inherits)
+        
+        class_two_path.add(class_two.name)
+        class_two = lookupClass(class_two.inherits)
+        
+
+        intersection = class_one_path.intersection(class_two_path)
+
+    return intersection.pop()
+
 
 class Method():
     """

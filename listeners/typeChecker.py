@@ -97,6 +97,13 @@ class typeChecker(coolListener):
 
     def exitFeature_function(self, ctx: coolParser.Feature_functionContext):
         ctx.objectEnv.closeScope()  # remove parameter bindings on exit
+        try:
+            expression_type = lookupClass(ctx.expr().dataType)
+            return_type = lookupClass(ctx.TYPE().getText())
+            if not expression_type.conformsTo(return_type):
+                raise lubtest("Expression type: ", expression_type.name, "must conform to return type: ", return_type.name)
+        except AttributeError:
+            pass
 
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
         name = ctx.ID().getText()
@@ -333,3 +340,10 @@ class typeChecker(coolListener):
         # rightSide must conform to leftSide
         if not right_klass.conformsTo(left_klass):
             raise assignnoconform
+
+    def exitIf_else(self, ctx: coolParser.If_elseContext):
+        data_type_if = lookupClass(ctx.expr(1).dataType)
+        data_type_else = lookupClass(ctx.expr(2).dataType)
+
+        least_common_ancestor = getLeastCommonAncestor(data_type_if, data_type_else)
+        ctx.dataType = least_common_ancestor
