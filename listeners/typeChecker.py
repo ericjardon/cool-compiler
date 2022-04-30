@@ -222,8 +222,12 @@ class typeChecker(coolListener):
         if ctx.TYPE():
             # check if conforms to parent type after @
             parent = lookupClass(ctx.TYPE().getText())
-            if not lookupClass(caller).conformsTo(parent):
+            caller_class = lookupClass(caller)
+            if not caller_class.conformsTo(parent) :
+                if parent.conformsTo(caller_class):
+                    raise badstaticdispatch()
                 raise trickyatdispatch2()
+                
 
         try:
             method = k.lookupMethod(methodName)
