@@ -1,4 +1,5 @@
 from typing import Tuple, List
+
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
@@ -82,15 +83,21 @@ class typeChecker(coolListener):
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
         name = ctx.ID().getText()
         type = ctx.TYPE().getText()
+        
         # Look up the atribute in the class hierarchy, if it is found, raise attroverride, otherwise add it to current active class
         try:
             ctx.activeClass.lookupAttribute(name)
             raise attroverride()
         except KeyError:
-            ctx.activeClass.addAttribute(name, type)  # we can call lookupAttribute later
-
-        
-
+            ctx.activeClass.addAttribute(name, type)
+        # Maybe we should map this to a dict with classes and attributes? and then check if expr.getText() is an atribute, then confirm it is part of the class hierarchy?
+        if ctx.expr():
+            expr = ctx.expr().getText()
+            if (type == "Object"):
+                try: 
+                    ctx.activeClass.lookupAttribute(expr)
+                except KeyError:
+                    raise attrbadinit()
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
@@ -124,16 +131,11 @@ class typeChecker(coolListener):
             if ctx.ID().getText() == 'self':
                 ctx.dataType = activeClass.name
                 return
-            # Look for variable in parent classes, if it doesn't exist, raise attrbadinit
-            try:
-                name = ctx.ID().getText()
-                activeClass.lookupAttribute(name)
-            except KeyError:
-                raise attrbadinit()
             # Look for variable in this scope, if it doesn't exist, raise out of scope exception
             try :
                 ctx.dataType = objectEnv[ctx.ID().getText()]
             except KeyError:
+                
                 raise outofscope()
         else:
             # is a subexpression, implement type checking for generic expressions
