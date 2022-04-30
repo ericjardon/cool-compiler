@@ -44,6 +44,11 @@ class Klass():
         self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
 
+    def setInherits(self, inherits):
+        self.inherits = inherits
+        if self.name != "Object":
+            self.validHierarchy()
+
     def validHierarchy(self):
         up = self.inherits
         # Buscar hacia arriba hasta llegar a object
