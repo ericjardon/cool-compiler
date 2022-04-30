@@ -109,7 +109,11 @@ class typeChecker(coolListener):
         except KeyError:
             ctx.activeClass.addAttribute(name, type)
         if ctx.expr():
-            expr = ctx.expr().primary().getText()
+            try: 
+                expr = ctx.expr().primary().getText()
+            except AttributeError:
+                # Solve expression 
+                pass
             try:
                 ctx.objectEnv[expr]
             except KeyError:
@@ -176,20 +180,36 @@ class typeChecker(coolListener):
         k = lookupClass(caller)
 
         print("caller: <", caller, ">")
-        methodName = ctx.ID().getText()
-        print("method name:", methodName)
+        method_name = ctx.ID().getText()
+        print("method name:", method_name)
         try:
-            method = k.lookupMethod(methodName)
+            method = k.lookupMethod(method_name)
             # then compare formal params
         except KeyError:
             if caller == "Int":
                 raise badwhilebody()
             else:
                 raise baddispatch(
-                    f"{caller} object does not have method '{methodName}'"
+                    f"{caller} object does not have method '{method_name}'"
                 )
 
-        self.checkArgsParams(args=ctx.params, method=method, methodName=methodName)
+        self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
+
+    def enterMethod_call(self, ctx: coolParser.Method_callContext):
+        object_env, active_class = getCurrentScope(ctx)
+        method_name = ctx.ID().getText()
+        method = active_class.lookupMethod(method_name)
+        ctx.dataType = method.type
+
+    def exitMethod_call(self, ctx: coolParser.Method_callContext):
+        object_env, active_class = getCurrentScope(ctx)
+        methond_name = ctx.ID().getText()
+        method = active_class.lookupMethod(methond_name)
+       
+        try:
+            self.checkArgsParams(args=ctx.params, method=method, methodName=methond_name)
+        except badargs1:
+            raise badmethodcallsitself()
 
     def exitStatic_dispatch(self, ctx: coolParser.Static_dispatchContext):
         caller = ctx.getChild(0).dataType
