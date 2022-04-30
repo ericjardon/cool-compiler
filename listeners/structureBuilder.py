@@ -29,7 +29,8 @@ class structureBuilder(coolListener):
     basicTypes = set(['Int','String','Bool'])
 
     def __init__(self) -> None:
-        classDict.clear()          
+        classDict.clear()
+        self.deferredInherits = {}  # maps class name to parent class name
         setBaseKlasses() 
 
     def getDefinedClasses():
@@ -47,11 +48,10 @@ class structureBuilder(coolListener):
 
         if (ctx.TYPE(1)):
             inheritance = ctx.TYPE(1).getText()
-            try:
-                inherit = lookupClass(inheritance)
-                k = Klass(name, inherit.name)
-            except KeyError as error:
-                raise missingclass()
+            self.deferredInherits[name] = inheritance
+            k = Klass(name=name)
+            # Defer checking parent class existence
+            # So we can define child classes before parent ones in the source code
 
         else:            
             k = Klass(name=name)
@@ -90,13 +90,18 @@ class structureBuilder(coolListener):
         
         ctx.activeClass.addMethod(name, newMethod)
 
-        # Job of typeChecker now:
-        # Add parameter type bindings in the object scope
-        # ctx.objectEnv.openScope()
-        # for id, type in parameters:
-        #     ctx.objectEnv[id] = type
+        # Next listener ``typeChecker is who inserts parameter bindings to a new, extended scope.
+        
 
-        # body = ctx.expr()
-        # print("Body of method <", body.getText(),'>')
-        # body.objectEnv = ctx.objectEnv
-        # body.activeClass = ctx.activeClass
+    def exitProgram(self, ctx:coolParser.ProgramContext):
+        # Check that all parent classes are defined
+        for child, parent in self.deferredInherits.items():
+            try:
+                lookupClass(parent)
+
+            except KeyError as e:
+                print("undefined parent class", e)
+                raise missingclass("Undefined parent class", parent)
+
+            childKlass = lookupClass(child)            
+            childKlass.setInherits(parent)
