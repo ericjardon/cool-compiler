@@ -3,7 +3,7 @@ from typing import Tuple, List
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 
-from util.exceptions import assignnoconform, attrbadinit, attroverride, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2, trickyatdispatch2
+from util.exceptions import assignnoconform, attrbadinit, attroverride, badargs1, badarith, baddispatch, badwhilebody, badwhilecond, caseidenticalbranch, dupformals, letbadinit, missingclass, outofscope, overridingmethod4, redefinedclass, returntypenoexist, selftypebadreturn, badequalitytest, badequalitytest2, signaturechange, trickyatdispatch2
 from util.structure import *
 from antlr4.tree.Tree import ParseTree
 from util.structure import _allClasses as classDict
@@ -57,6 +57,16 @@ class typeChecker(coolListener):
         name = ctx.ID().getText()
         method = ctx.activeClass.lookupMethod(name)
 
+        parentClass = lookupClass(ctx.activeClass.inherits)
+        if parentClass.name != "Object":
+            parentMethod = parentClass.lookupMethod(name)
+
+            if parentMethod:
+                if (len(parentMethod.params) != len(method.params)):
+                    raise signaturechange()
+                if parentMethod.params != method.params:
+                    raise overridingmethod4()
+
         if (method.type != "SELF_TYPE"):
             try:
                 lookupClass(method.type)
@@ -65,7 +75,7 @@ class typeChecker(coolListener):
 
         parameters = list(method.params.items())
         print(f"METHOD {name}({parameters})")
-
+        
         # Add parameter type bindings in the object scope
         ctx.objectEnv.openScope()
         for id, type in parameters:
@@ -90,14 +100,12 @@ class typeChecker(coolListener):
             raise attroverride()
         except KeyError:
             ctx.activeClass.addAttribute(name, type)
-        # Maybe we should map this to a dict with classes and attributes? and then check if expr.getText() is an atribute, then confirm it is part of the class hierarchy?
         if ctx.expr():
-            expr = ctx.expr().getText()
-            if (type == "Object"):
-                try: 
-                    ctx.activeClass.lookupAttribute(expr)
-                except KeyError:
-                    raise attrbadinit()
+            expr = ctx.expr().primary().getText() 
+            try: 
+                ctx.objectEnv[expr]
+            except KeyError:
+                raise attrbadinit()
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
