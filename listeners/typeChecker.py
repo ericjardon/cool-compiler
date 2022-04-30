@@ -59,13 +59,15 @@ class typeChecker(coolListener):
 
         parentClass = lookupClass(ctx.activeClass.inherits)
         if parentClass.name != "Object":
-            parentMethod = parentClass.lookupMethod(name)
-
-            if parentMethod:
+            try:
+                parentMethod = parentClass.lookupMethod(name)
                 if (len(parentMethod.params) != len(method.params)):
                     raise signaturechange()
                 if parentMethod.params != method.params:
                     raise overridingmethod4()
+            except KeyError:
+                pass
+            
 
         if (method.type != "SELF_TYPE"):
             try:
