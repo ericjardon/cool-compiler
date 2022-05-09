@@ -4,100 +4,132 @@ from main import dummy
 from main import compile
 from util.exceptions import *
 
+## SHOULD NOT THROW EXCEPTION
+
 def test_assignment():
-     with pytest.raises(Exception):
-         compile('resources/semantic/input/assignment.cool')
+     compile('resources/semantic/input/assignment.cool')
 
 def test_basic():
-     with pytest.raises(Exception):
-         compile('resources/semantic/input/basic.cool')
+     compile('resources/semantic/input/basic.cool')
 
 def test_basicclassestree():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/basicclassestree.cool')
+    compile('resources/semantic/input/basicclassestree.cool')
 
 def test_cells():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/cells.cool')
+    compile('resources/semantic/input/cells.cool')
 
 def test_classes():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/classes.cool')
+    compile('resources/semantic/input/classes.cool')
 
 def test_compare():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/compare.cool')
+    compile('resources/semantic/input/compare.cool')
 
 def test_comparisons():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/comparisons.cool')
+    compile('resources/semantic/input/comparisons.cool')
 
 def test_cycleinmethods():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/cycleinmethods.cool')
+    compile('resources/semantic/input/cycleinmethods.cool')
 
 def test_dispatch():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/dispatch.cool')
+    compile('resources/semantic/input/dispatch.cool')
 
 def test_expressionblock():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/expressionblock.cool')
+    compile('resources/semantic/input/expressionblock.cool')
 
 def test_forwardinherits():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/forwardinherits.cool')
+    compile('resources/semantic/input/forwardinherits.cool')
 
 
 def test_hairyscary():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/hairyscary.cool')
+    compile('resources/semantic/input/hairyscary.cool')
 
 def test_if():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/if.cool')
+    compile('resources/semantic/input/if.cool')
 
 def test_inheritsObject():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/inheritsObject.cool')
+    compile('resources/semantic/input/inheritsObject.cool')
 
 def test_initwithself():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/initwithself.cool')
+    compile('resources/semantic/input/initwithself.cool')
 
 
 def test_io():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/io.cool')
+    compile('resources/semantic/input/io.cool')
 
 
 def test_isvoid():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/isvoid.cool')
+    compile('resources/semantic/input/isvoid.cool')
 
 def test_letinit():
-    with pytest.raises(Exception):
-        compile('resources/semantic/input/letinit.cool')
+    compile('resources/semantic/input/letinit.cool')
 
-###
-'''letnoinit.cool
-letselftype.cool
-letshadows.cool
-list.cool
-methodcallsitself.cool
-methodnameclash.cool
-neg.cool
-newselftype.cool
-objectdispatchabort.cool
-overriderenamearg.cool
-overridingmethod.cool
-overridingmethod2.cool
-overridingmethod3.cool
-scopes.cool
-simplearith.cool
-simplecase.cool
-staticdispatch.cool
-stringtest.cool
-subtypemethodreturn.cool
-trickyatdispatch.cool'''
+def test_letnoinit():
+    compile('resources/semantic/input/letnoinit.cool')
+
+def test_letselftype():
+    compile('resources/semantic/input/letselftype.cool')
+
+def test_letshadows():
+    compile('resources/semantic/input/letshadows.cool')
+
+def test_list():
+    compile('resources/semantic/input/list.cool')
+
+def test_methodcallsitself():
+    compile('resources/semantic/input/methodcallsitself.cool')
+
+def test_methodnameclash():
+    compile('resources/semantic/input/methodnameclash.cool')
+
+
+def test_neg():
+    compile('resources/semantic/input/neg.cool')
+
+
+def test_newselftype():
+    compile('resources/semantic/input/newselftype.cool')
+
+
+def test_objectdispatchabort():
+    compile('resources/semantic/input/objectdispatchabort.cool')
+
+
+def test_overriderenamearg():
+    compile('resources/semantic/input/overriderenamearg.cool')
+
+def test_overridingmethod():
+    compile('resources/semantic/input/overridingmethod.cool')
+
+
+def test_overridingmethod2():
+    compile('resources/semantic/input/overridingmethod2.cool')
+
+
+def test_overridingmethod3():
+    compile('resources/semantic/input/overridingmethod3.cool')
+
+
+def test_scopes():
+    compile('resources/semantic/input/scopes.cool')
+
+def test_simplearith():
+    compile('resources/semantic/input/simplearith.cool')
+
+def test_simplecase():
+    compile('resources/semantic/input/simplecase.cool')
+
+
+def test_staticdispatch():
+    compile('resources/semantic/input/staticdispatch.cool')
+
+def test_stringtest():
+    compile('resources/semantic/input/stringtest.cool')
+
+def test_subtypemethodreturn():
+    compile('resources/semantic/input/subtypemethodreturn.cool')
+
+def test_trickyatdispatch():
+    compile('resources/semantic/input/trickyatdispatch.cool')
+
+
 
