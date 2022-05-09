@@ -6,26 +6,26 @@ from util.exceptions import *
 
 ## SHOULD NOT THROW EXCEPTION
 
-# def test_assignment():
-#      compile('resources/semantic/input/assignment.cool')
+def test_assignment():
+     compile('resources/semantic/input/assignment.cool')
 
-# def test_basic():
-#      compile('resources/semantic/input/basic.cool')
+def test_basic():
+     compile('resources/semantic/input/basic.cool')
 
-# def test_basicclassestree():
-#     compile('resources/semantic/input/basicclassestree.cool')
+def test_basicclassestree():
+    compile('resources/semantic/input/basicclassestree.cool')
 
 def test_cells():
     compile('resources/semantic/input/cells.cool')
 
-# def test_classes():
-#     compile('resources/semantic/input/classes.cool')
+def test_classes():
+    compile('resources/semantic/input/classes.cool')
 
-# def test_compare():
-#     compile('resources/semantic/input/compare.cool')
+def test_compare():
+    compile('resources/semantic/input/compare.cool')
 
-# def test_comparisons():
-#     compile('resources/semantic/input/comparisons.cool')
+def test_comparisons():
+    compile('resources/semantic/input/comparisons.cool')
 
 # def test_cycleinmethods():
 #     compile('resources/semantic/input/cycleinmethods.cool')
