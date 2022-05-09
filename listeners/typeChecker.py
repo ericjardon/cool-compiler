@@ -219,7 +219,7 @@ class typeChecker(coolListener):
         
         # Return type, enforce SELF_TYPE rules
         if method.type == 'SELF_TYPE' :
-            ctx.dataType = k # class of caller
+            ctx.dataType = k.name # class of caller
         else:
             ctx.dataType = method.type
 
@@ -269,7 +269,7 @@ class typeChecker(coolListener):
 
         # Return type, enforce SELF_TYPE rules
         if method.type == 'SELF_TYPE' :
-            ctx.dataType = k # class of caller
+            ctx.dataType = k.name # class of caller
         else:
             ctx.dataType = method.type  
 
@@ -309,6 +309,8 @@ class typeChecker(coolListener):
         if predicate.dataType != "Bool":
             raise badwhilecond("While predicate must evaluate to a Bool value")
 
+        ctx.dataType = 'Object'  # always
+
     def enterLet_expr(self, ctx: coolParser.Let_exprContext):
         # Parent node to Let_decl
         object_env, active_class = getCurrentScope(ctx)
@@ -347,7 +349,6 @@ class typeChecker(coolListener):
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
         # receive the dataType from the child node
         object_env, active_class = getCurrentScope(ctx)
-        print("Active class is", active_class.name)
         id = ctx.ID().getText()
         left_side = object_env[id]
         right_side = ctx.expr().dataType
@@ -358,6 +359,7 @@ class typeChecker(coolListener):
             else:
                 right_klass = lookupClass(right_side)
             left_klass = lookupClass(left_side)
+        
         except Exception as _e:
             missing = []
             existing = classDict.keys()
