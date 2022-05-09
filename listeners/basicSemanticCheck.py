@@ -28,9 +28,9 @@ class basicSemanticListener(coolListener):
             inheritance = ctx.TYPE(1).getText()
             if inheritance in prohibitedInheritance:
                 raise prohibitedInheritance[inheritance]()
-                    
+                
 
-    def exitKlass(self, ctx:coolParser.KlassContext):
+    def exitProgram(self, ctx:coolParser.ProgramContext):
         if (not self.main):
             raise nomain("You need to define a Main class")
 

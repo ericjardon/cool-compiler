@@ -9,14 +9,14 @@ from util.exceptions import *
 def test_assignment():
      compile('resources/semantic/input/assignment.cool')
 
-# def test_basic():
-#      compile('resources/semantic/input/basic.cool')
+def test_basic():
+     compile('resources/semantic/input/basic.cool')
 
-# def test_basicclassestree():
-#     compile('resources/semantic/input/basicclassestree.cool')
+def test_basicclassestree():
+    compile('resources/semantic/input/basicclassestree.cool')
 
-# def test_cells():
-#     compile('resources/semantic/input/cells.cool')
+def test_cells():
+    compile('resources/semantic/input/cells.cool')
 
 # def test_classes():
 #     compile('resources/semantic/input/classes.cool')
