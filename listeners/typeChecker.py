@@ -195,6 +195,7 @@ class typeChecker(coolListener):
                     raise badequalitytest2()
                 else:
                     raise badequalitytest()  # any type discrepancy should throw error
+        ctx.dataType = 'Bool'
 
     def exitDispatch(self, ctx: coolParser.DispatchContext):
         # Check validity of the dispatch: method must be defined, types must conform
@@ -279,6 +280,7 @@ class typeChecker(coolListener):
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        ctx.dataType = 'Int'
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
         left_type = ctx.expr(0).dataType
@@ -287,12 +289,15 @@ class typeChecker(coolListener):
         if left_type != "Int" or right_type != "Int":
             raise badarith()
 
+        ctx.dataType = 'Int'
+
     def exitDivision(self, ctx: coolParser.DivisionContext):
         left_type = ctx.expr(0).dataType
         right_type = ctx.expr(1).dataType
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        ctx.dataType = 'Int'
 
     def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
         left_type = ctx.expr(0).dataType
@@ -300,6 +305,8 @@ class typeChecker(coolListener):
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        
+        ctx.dataType = 'Int'
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         # all subexpressions of while have been evaluated.
@@ -390,16 +397,5 @@ class typeChecker(coolListener):
         exprs = ctx.expr()
         ctx.dataType = exprs[-1].dataType
 
-    def exitMultiplication(self, ctx:coolParser.MultiplicationContext):
-        ctx.dataType = 'Int'
-    def exitDivision(self, ctx:coolParser.DivisionContext):
-        ctx.dataType = 'Int'
-    def exitSubtraction(self, ctx:coolParser.SubtractionContext):
-        ctx.dataType = 'Int'
-    def exitAddition(self, ctx:coolParser.AdditionContext):
-        ctx.dataType = 'Int'
-
-    def exitEquals(self, ctx:coolParser.EqualsContext):
-        ctx.dataType = 'Bool'
     def exitLess_than(self, ctx:coolParser.Less_thanContext):
         ctx.dataType = 'Bool'
