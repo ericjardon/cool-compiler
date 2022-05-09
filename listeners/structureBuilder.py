@@ -79,9 +79,12 @@ class structureBuilder(coolListener):
 
         if (return_type == "SELF_TYPE"):
             # Check that class conforms to this class
-            checkClass = ctx.expr().TYPE().getText()
-            if checkClass not in valid_self_type_returns:
-                raise selftypebadreturn()
+            try:
+                checkClass = ctx.expr().TYPE().getText()
+                if checkClass not in valid_self_type_returns:
+                    raise selftypebadreturn()
+            except AttributeError:
+                pass
 
         if len(parameters) == 0 :
             newMethod = Method(return_type)

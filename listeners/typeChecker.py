@@ -77,6 +77,7 @@ class typeChecker(coolListener):
                 pass
 
         if method.type != "SELF_TYPE":
+            print("Method type is", method.type)
             try:
                 lookupClass(method.type)
             except KeyError:
@@ -99,7 +100,14 @@ class typeChecker(coolListener):
         ctx.objectEnv.closeScope()  # remove parameter bindings on exit
         try:
             expression_type = lookupClass(ctx.expr().dataType)
-            return_type = lookupClass(ctx.TYPE().getText())
+            
+            returnTypeName = ctx.TYPE().getText()
+            if returnTypeName == 'SELF_TYPE':
+                print("method return type is self_type ->", ctx.activeClass.name)
+                return_type = ctx.activeClass
+            else: 
+                return_type = lookupClass(ctx.TYPE().getText())
+
             if not expression_type.conformsTo(return_type):
                 raise lubtest("Expression type: ", expression_type.name, "must conform to return type: ", return_type.name)
         except AttributeError:
@@ -149,7 +157,6 @@ class typeChecker(coolListener):
         try:
             ctx.dataType = primary.dataType
         except AttributeError:
-            print(primary.__dict__)
             print(f"Primary expression {ctx.getText()} has no datatype")
 
     def exitPrimary(self, ctx: coolParser.PrimaryContext):
@@ -172,7 +179,8 @@ class typeChecker(coolListener):
                 raise outofscope()
         else:
             # is a subexpression, implement type checking for generic expressions
-            print("subexpression <", ctx.expr().getText(), ">")
+            # print("subexpression <", ctx.expr().getText(), ">")
+            print("exit primary dataType", ctx.expr().dataType)
             ctx.dataType = ctx.expr().dataType
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
@@ -208,6 +216,12 @@ class typeChecker(coolListener):
                 )
 
         self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
+        
+        # Return type, enforce SELF_TYPE rules
+        if method.type == 'SELF_TYPE' :
+            ctx.dataType = k # class of caller
+        else:
+            ctx.dataType = method.type
 
     def enterMethod_call(self, ctx: coolParser.Method_callContext):
         object_env, active_class = getCurrentScope(ctx)
@@ -240,8 +254,7 @@ class typeChecker(coolListener):
             if not caller_class.conformsTo(parent) :
                 if parent.conformsTo(caller_class):
                     raise badstaticdispatch()
-                raise trickyatdispatch2()
-                
+                raise trickyatdispatch2() 
 
         try:
             method = k.lookupMethod(methodName)
@@ -253,6 +266,12 @@ class typeChecker(coolListener):
                 raise baddispatch(
                     f"{caller} object does not have method '{methodName}'"
                 )
+
+        # Return type, enforce SELF_TYPE rules
+        if method.type == 'SELF_TYPE' :
+            ctx.dataType = k # class of caller
+        else:
+            ctx.dataType = method.type  
 
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType
@@ -299,6 +318,7 @@ class typeChecker(coolListener):
     def exitLet_expr(self, ctx: coolParser.Let_exprContext):
         object_env, active_class = getCurrentScope(ctx)
         object_env.closeScope()
+        ctx.dataType = ctx.expr().dataType
 
     def enterLet_decl(self, ctx: coolParser.Let_declContext):
         # Store the variable in current Scope
@@ -326,13 +346,17 @@ class typeChecker(coolListener):
 
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
         # receive the dataType from the child node
-        object_env, _ = getCurrentScope(ctx)
+        object_env, active_class = getCurrentScope(ctx)
+        print("Active class is", active_class.name)
         id = ctx.ID().getText()
         left_side = object_env[id]
         right_side = ctx.expr().dataType
 
         try:
-            right_klass = lookupClass(right_side)
+            if right_side == 'SELF_TYPE':
+                right_klass = active_class
+            else:
+                right_klass = lookupClass(right_side)
             left_klass = lookupClass(left_side)
         except Exception as _e:
             missing = []
@@ -344,9 +368,12 @@ class typeChecker(coolListener):
             msg = ",".join(missing)
             raise missingclass(msg)
 
-        # rightSide must conform to leftSide
+        print("Does", left_klass.name,"conform to",right_klass.name)
+        # right_side must conform to left_side
         if not right_klass.conformsTo(left_klass):
             raise assignnoconform
+        
+        ctx.dataType = ctx.expr().dataType
 
     def exitIf_else(self, ctx: coolParser.If_elseContext):
         data_type_if = lookupClass(ctx.expr(1).dataType)
@@ -354,3 +381,23 @@ class typeChecker(coolListener):
 
         least_common_ancestor = getLeastCommonAncestor(data_type_if, data_type_else)
         ctx.dataType = least_common_ancestor
+
+    
+    def exitBlock(self, ctx:coolParser.BlockContext):
+        # Return type is last expression's return type
+        exprs = ctx.expr()
+        ctx.dataType = exprs[-1].dataType
+
+    def exitMultiplication(self, ctx:coolParser.MultiplicationContext):
+        ctx.dataType = 'Int'
+    def exitDivision(self, ctx:coolParser.DivisionContext):
+        ctx.dataType = 'Int'
+    def exitSubtraction(self, ctx:coolParser.SubtractionContext):
+        ctx.dataType = 'Int'
+    def exitAddition(self, ctx:coolParser.AdditionContext):
+        ctx.dataType = 'Int'
+
+    def exitEquals(self, ctx:coolParser.EqualsContext):
+        ctx.dataType = 'Bool'
+    def exitLess_than(self, ctx:coolParser.Less_thanContext):
+        ctx.dataType = 'Bool'
