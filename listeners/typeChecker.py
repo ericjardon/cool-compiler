@@ -117,14 +117,21 @@ class typeChecker(coolListener):
             ctx.activeClass.addAttribute(name, type)
         if ctx.expr():
             try: 
-                expr = ctx.expr().primary().getText()
+                expr = ctx.expr().primary()
             except AttributeError:
                 # Solve expression 
+                print("No primary in expr, solve")
                 pass
-            try:
-                ctx.objectEnv[expr]
-            except KeyError:
-                raise attrbadinit()
+            if expr.ID():
+                try:
+                    ctx.objectEnv[expr.getText()]
+                except KeyError as e:
+                    print(e)
+                    raise attrbadinit(e.__repr__())
+            else:
+                # Is a literal value
+                pass
+                
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
