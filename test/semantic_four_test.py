@@ -27,21 +27,21 @@ def test_compare():
 def test_comparisons():
     compile('resources/semantic/input/comparisons.cool')
 
-# def test_cycleinmethods():
-#     compile('resources/semantic/input/cycleinmethods.cool')
+def test_cycleinmethods():
+    compile('resources/semantic/input/cycleinmethods.cool')
 
-# def test_dispatch():
-#     compile('resources/semantic/input/dispatch.cool')
+def test_dispatch():
+    compile('resources/semantic/input/dispatch.cool')
 
-# def test_expressionblock():
-#     compile('resources/semantic/input/expressionblock.cool')
+def test_expressionblock():
+    compile('resources/semantic/input/expressionblock.cool')
 
-# def test_forwardinherits():
-#     compile('resources/semantic/input/forwardinherits.cool')
+def test_forwardinherits():
+    compile('resources/semantic/input/forwardinherits.cool')
 
 
-# def test_hairyscary():
-#     compile('resources/semantic/input/hairyscary.cool')
+def test_hairyscary():
+    compile('resources/semantic/input/hairyscary.cool')
 
 # def test_if():
 #     compile('resources/semantic/input/if.cool')

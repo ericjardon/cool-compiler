@@ -76,7 +76,7 @@ class Klass():
                 raise HierarchyException
             up = _allClasses[up].inherits
 
-    def addAttribute(self, name, type):
+    def addAttribute(self, name, type=None):
         try:
             # Busco el atributo, si no está (excepción), puedo agregarlo
             self.lookupAttribute(name)
@@ -136,7 +136,7 @@ class Klass():
         
 class SymbolTable(MutableMapping):
     """
-    La diferencia entre una tabla de sÃ­mbolos y un dict es que si la
+    La diferencia entre una tabla de símbolos y un dict es que si la
     llave ya está en la tabla, entonces se debe lanzar excepción.
     """
     def __init__(self):
@@ -146,7 +146,7 @@ class SymbolTable(MutableMapping):
         return self.dict[key]
 
     def __setitem__(self, key, value):
-        """AquÃ­, si key ya está, regresar excepción"""
+        """Aquí, si key ya está, regresar excepción"""
         if key in self.dict:
             raise KeyError(key)
         self.dict[key] = value 
@@ -166,7 +166,7 @@ class SymbolTable(MutableMapping):
 
 class SymbolTableWithScopes(MutableMapping):
     """
-    Esta versión de tabla de sÃ­mbolos maneja scopes mediante una pila,
+    Esta versión de tabla de símbolos maneja scopes mediante una pila,
     guarda en el scope activo y busca en los superiores.
     """
     def __init__(self, klass: Klass):

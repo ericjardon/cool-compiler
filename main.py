@@ -14,7 +14,9 @@ def compile(file):
     
     walker.walk(basicSemanticListener(), tree)
     
-    walker.walk(structureBuilder(), tree)  # build the allClasses dict
+    walker.walk(structureBuilder(), tree)  # build the allClasses dict, sets inheritance
+
+    walker.walk(featuresListener(), tree)  # add feature methods and attributes
 
     walker.walk(typeChecker(), tree)
     

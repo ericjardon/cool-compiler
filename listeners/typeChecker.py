@@ -114,31 +114,25 @@ class typeChecker(coolListener):
             pass
 
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
-        name = ctx.ID().getText()
-        type = ctx.TYPE().getText()
 
-        # Look up the atribute in the class hierarchy, if it is found, raise attroverride, otherwise add it to current active class
-        try:
-            ctx.activeClass.lookupAttribute(name)
-            raise attroverride()
-        except KeyError:
-            ctx.activeClass.addAttribute(name, type)
+        # Type checking
         if ctx.expr():
             try: 
                 expr = ctx.expr().primary()
+                if expr.ID():
+                    try:
+                        ctx.objectEnv[expr.getText()]
+                    except KeyError as e:
+                        print(e)
+                        raise attrbadinit(e.__repr__())
+                else:
+                    # Is a literal value
+                    pass
             except AttributeError:
                 # Solve expression 
                 print("No primary in expr, solve")
                 pass
-            if expr.ID():
-                try:
-                    ctx.objectEnv[expr.getText()]
-                except KeyError as e:
-                    print(e)
-                    raise attrbadinit(e.__repr__())
-            else:
-                # Is a literal value
-                pass
+
                 
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
@@ -168,15 +162,22 @@ class typeChecker(coolListener):
             ctx.dataType = "Bool"
         elif ctx.ID():  # is a variable name, assign type from scope
             object_env, active_class = getCurrentScope(ctx)
+            identifier = ctx.ID().getText()
             # Check self keyword
-            if ctx.ID().getText() == "self":
+            if identifier == "self":
                 ctx.dataType = active_class.name
                 return
             # Look for variable in this scope, if it doesn't exist, raise out of scope exception
             try:
-                ctx.dataType = object_env[ctx.ID().getText()]
+                # try object scope
+                ctx.dataType = object_env[identifier]
             except KeyError:
-                raise outofscope()
+                # try class scope
+                try: 
+                    ctx.dataType = active_class.lookupAttribute(identifier)
+                except KeyError as e:
+                    print(e)
+                    raise outofscope(f"Variable '{identifier}' is out of scope")
         else:
             # is a subexpression, implement type checking for generic expressions
             # print("subexpression <", ctx.expr().getText(), ">")
@@ -399,3 +400,21 @@ class typeChecker(coolListener):
 
     def exitLess_than(self, ctx:coolParser.Less_thanContext):
         ctx.dataType = 'Bool'
+
+    def exitNot(self, ctx:coolParser.NotContext):
+        if ctx.expr().dataType == 'Bool':
+            ctx.dataType = 'Bool'
+        else:
+            raise Exception("Type Error: argument of 'not' must be Bool")
+
+
+    def enterCase_stat(self, ctx:coolParser.Case_statContext):
+        objectEnv, _ = getCurrentScope(ctx)
+
+        objectEnv.openScope()
+        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
+           
+
+    def exitCase_stat(self, ctx:coolParser.Case_statContext):
+        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv.closeScope()
