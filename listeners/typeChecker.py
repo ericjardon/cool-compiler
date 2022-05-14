@@ -1,3 +1,4 @@
+from cgitb import lookup
 from typing import Tuple, List
 from antlr4.tree.Tree import ParseTree
 from antlr.coolListener import coolListener
@@ -187,8 +188,10 @@ class typeChecker(coolListener):
                     raise outofscope(f"Variable '{identifier}' is out of scope")
         else:
             # is a subexpression, implement type checking for generic expressions
-            # print("subexpression <", ctx.expr().getText(), ">")
-            print("exit primary dataType", ctx.expr().dataType)
+            print("subexpression <", ctx.expr().getText(), ">")
+            print("subexpr dataType", ctx.expr().dataType)            
+            print("Expr class:", type(ctx.expr()))
+
             ctx.dataType = ctx.expr().dataType
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
@@ -334,7 +337,10 @@ class typeChecker(coolListener):
     def exitLet_expr(self, ctx: coolParser.Let_exprContext):
         object_env, active_class = getCurrentScope(ctx)
         object_env.closeScope()
-        ctx.dataType = ctx.expr().dataType
+        if ctx.expr().dataType == 'SELF_TYPE':
+            ctx.dataType = active_class.name
+        else:
+            ctx.dataType = ctx.expr().dataType
 
     def enterLet_decl(self, ctx: coolParser.Let_declContext):
         # Store the variable in current Scope
@@ -348,13 +354,23 @@ class typeChecker(coolListener):
         if ctx.expr():  # has initialization
             try:
                 data_type = ctx.expr().dataType
-                if not lookupClass(data_type).conformsTo(lookupClass(declared_type)):
+                if declared_type == 'SELF_TYPE':
+                    _, left_klass = getCurrentScope(ctx)
+                else:
+                    left_klass = lookupClass(declared_type)
+
+                right_klass = lookupClass(data_type)
+
+                if not right_klass.conformsTo(left_klass):
                     raise letbadinit(
                         f"Provided {data_type} does not conform to {declared_type}"
                     )
 
             except AttributeError:
                 print(f"{ctx.expr().getText()} expression has no dataType")
+            except KeyError as e:
+                print("Let declaration error", e)
+                raise Exception()
 
     def enterNew(self, ctx: coolParser.NewContext):
         # Store the TYPE and return it to parent

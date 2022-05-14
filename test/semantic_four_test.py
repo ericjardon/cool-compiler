@@ -63,14 +63,14 @@ def test_isvoid():
 def test_letinit():
     compile('resources/semantic/input/letinit.cool')
 
-# def test_letnoinit():
-#     compile('resources/semantic/input/letnoinit.cool')
+def test_letnoinit():
+    compile('resources/semantic/input/letnoinit.cool')
 
-# def test_letselftype():
-#     compile('resources/semantic/input/letselftype.cool')
+def test_letselftype():
+    compile('resources/semantic/input/letselftype.cool')
 
-# def test_letshadows():
-#     compile('resources/semantic/input/letshadows.cool')
+def test_letshadows():
+    compile('resources/semantic/input/letshadows.cool')
 
 # def test_list():
 #     compile('resources/semantic/input/list.cool')
