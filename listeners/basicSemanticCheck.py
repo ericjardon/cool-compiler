@@ -37,14 +37,6 @@ class basicSemanticListener(coolListener):
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
         if(ctx.ID().getText() == "self"):
             raise anattributenamedself("Self is a reserved keyword")
-        if ctx.expr():
-            try:
-                if ctx.expr().primary():
-                    if ctx.expr().primary().getText() == 'self':
-                        raise selfassignment()
-            except AttributeError:
-                # The assignment expression is not a primary
-                pass
 
     def enterLet_decl(self, ctx: coolParser.Let_declContext):
         # For every ID check that it is not == 'self'
@@ -58,3 +50,7 @@ class basicSemanticListener(coolListener):
                 raise selftypeparameterposition()
             if param.ID().getText() == "self":
                 raise selfinformalparameter()
+
+    def enterAssignment(self, ctx: coolParser.AssignmentContext):
+        if ctx.ID().getText() == 'self':
+            raise selfassignment("Illegal assignment: self is a reserved keyword")

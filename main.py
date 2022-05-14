@@ -4,6 +4,7 @@ from antlr.coolParser import coolParser
 
 from listeners.basicSemanticCheck import basicSemanticListener
 from listeners.structureBuilder import structureBuilder
+from listeners.featuresListener import featuresListener
 from listeners.typeChecker import typeChecker
 
 def compile(file):

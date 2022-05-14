@@ -77,7 +77,7 @@ class typeChecker(coolListener):
                 pass
 
         if method.type != "SELF_TYPE":
-            print("Method type is", method.type)
+            print("Method return type is", method.type)
             try:
                 lookupClass(method.type)
             except KeyError:
@@ -118,10 +118,17 @@ class typeChecker(coolListener):
         # Type checking
         if ctx.expr():
             try: 
-                expr = ctx.expr().primary()
-                if expr.ID():
+                subexpr = ctx.expr().primary()
+                if subexpr.ID():  # assigning a primary
+                    if subexpr.ID().getText() == 'self':
+                        # check conforms to static type
+                        _, activeClass = getCurrentScope(ctx)
+                        static_type = lookupClass(ctx.TYPE().getText())
+                        if not activeClass.conformsTo(static_type):
+                            raise attrbadinit(f"'self' does not conform to stated type: {static_type.name}")
+                        return
                     try:
-                        ctx.objectEnv[expr.getText()]
+                        ctx.objectEnv[subexpr.getText()]
                     except KeyError as e:
                         print(e)
                         raise attrbadinit(e.__repr__())
@@ -216,7 +223,6 @@ class typeChecker(coolListener):
                 raise baddispatch(
                     f"{caller} object does not have method '{method_name}'"
                 )
-
         self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
         
         # Return type, enforce SELF_TYPE rules
@@ -358,7 +364,10 @@ class typeChecker(coolListener):
         # receive the dataType from the child node
         object_env, active_class = getCurrentScope(ctx)
         id = ctx.ID().getText()
-        left_side = object_env[id]
+        if id == 'self':
+            left_side = active_class.name
+        else:
+            left_side = object_env[id]
         right_side = ctx.expr().dataType
 
         try:
@@ -418,3 +427,6 @@ class typeChecker(coolListener):
     def exitCase_stat(self, ctx:coolParser.Case_statContext):
         objectEnv, _ = getCurrentScope(ctx)
         objectEnv.closeScope()
+
+    def exitIsvoid(self, ctx:coolParser.IsvoidContext):
+        ctx.dataType = 'Bool'

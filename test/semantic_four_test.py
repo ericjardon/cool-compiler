@@ -43,25 +43,25 @@ def test_forwardinherits():
 def test_hairyscary():
     compile('resources/semantic/input/hairyscary.cool')
 
-# def test_if():
-#     compile('resources/semantic/input/if.cool')
+def test_if():
+    compile('resources/semantic/input/if.cool')
 
-# def test_inheritsObject():
-#     compile('resources/semantic/input/inheritsObject.cool')
+def test_inheritsObject():
+    compile('resources/semantic/input/inheritsObject.cool')
 
-# def test_initwithself():
-#     compile('resources/semantic/input/initwithself.cool')
-
-
-# def test_io():
-#     compile('resources/semantic/input/io.cool')
+def test_initwithself():
+    compile('resources/semantic/input/initwithself.cool')
 
 
-# def test_isvoid():
-#     compile('resources/semantic/input/isvoid.cool')
+def test_io():
+    compile('resources/semantic/input/io.cool')
 
-# def test_letinit():
-#     compile('resources/semantic/input/letinit.cool')
+
+def test_isvoid():
+    compile('resources/semantic/input/isvoid.cool')
+
+def test_letinit():
+    compile('resources/semantic/input/letinit.cool')
 
 # def test_letnoinit():
 #     compile('resources/semantic/input/letnoinit.cool')
