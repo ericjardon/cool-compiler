@@ -97,39 +97,39 @@ def test_objectdispatchabort():
 def test_overriderenamearg():
     compile('resources/semantic/input/overriderenamearg.cool')
 
-# def test_overridingmethod():
-#     compile('resources/semantic/input/overridingmethod.cool')
+def test_overridingmethod():
+    compile('resources/semantic/input/overridingmethod.cool')
 
 
-# def test_overridingmethod2():
-#     compile('resources/semantic/input/overridingmethod2.cool')
+def test_overridingmethod2():
+    compile('resources/semantic/input/overridingmethod2.cool')
 
 
-# def test_overridingmethod3():
-#     compile('resources/semantic/input/overridingmethod3.cool')
+def test_overridingmethod3():
+    compile('resources/semantic/input/overridingmethod3.cool')
 
 
-# def test_scopes():
-#     compile('resources/semantic/input/scopes.cool')
+def test_scopes():
+    compile('resources/semantic/input/scopes.cool')
 
 def test_simplearith():
     compile('resources/semantic/input/simplearith.cool')
 
-# def test_simplecase():
-#     compile('resources/semantic/input/simplecase.cool')
+def test_simplecase():
+    compile('resources/semantic/input/simplecase.cool')
 
 
-# def test_staticdispatch():
-#     compile('resources/semantic/input/staticdispatch.cool')
+def test_staticdispatch():
+    compile('resources/semantic/input/staticdispatch.cool')
 
-# def test_stringtest():
-#     compile('resources/semantic/input/stringtest.cool')
+def test_stringtest():
+    compile('resources/semantic/input/stringtest.cool')
 
-# def test_subtypemethodreturn():
-#     compile('resources/semantic/input/subtypemethodreturn.cool')
+def test_subtypemethodreturn():
+    compile('resources/semantic/input/subtypemethodreturn.cool')
 
-# def test_trickyatdispatch():
-#     compile('resources/semantic/input/trickyatdispatch.cool')
+def test_trickyatdispatch():
+    compile('resources/semantic/input/trickyatdispatch.cool')
 
 
 

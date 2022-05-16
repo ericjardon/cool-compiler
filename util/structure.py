@@ -2,6 +2,7 @@ from _collections_abc import MutableMapping
 from collections import OrderedDict
 import unittest
 from pprint import pprint
+from typing import List
 
 _allClasses = {}
 
@@ -10,24 +11,6 @@ class HierarchyException(Exception):
 
 def lookupClass(name):
     return _allClasses[name]
-
-def getLeastCommonAncestor(class_one, class_two):
-    class_one_path = set()
-    class_two_path = set()
-    
-    intersection = class_one_path.intersection(class_two_path)
-    
-    while len(intersection) < 1:
-        class_one_path.add(class_one.name)
-        class_one = lookupClass(class_one.inherits)
-        
-        class_two_path.add(class_two.name)
-        class_two = lookupClass(class_two.inherits)
-        
-
-        intersection = class_one_path.intersection(class_two_path)
-
-    return intersection.pop()
 
 
 class Method():
@@ -338,6 +321,60 @@ class BaseKlasses(unittest.TestCase):
         m = str.lookupMethod('substr')
         self.assertTrue(m.params['l'], 'Int')
 
+def getLCA(klasses: List[str]):
+    '''Returns the Least Common Ancestor of an arbitrary number 
+        of Klasses, provided len>0'''
+    print("Get LCA of", klasses)
+    lca = lookupClass(klasses[0])
+
+    for i in range(1, len(klasses)):
+        lca_name = getLeastCommonAncestor(lca, lookupClass(klasses[i]))
+        lca = lookupClass(lca_name)
+    print("LCA:", lca.name)
+    return lca
+
+def getLeastCommonAncestor(class_one: Klass, class_two:Klass) -> str:
+    '''Get all ancestors of class one into a set.
+    For all ancestors of class two, return the first klass
+    in the class one ancestors set'''
+
+    if class_one.name == 'Object' or class_two.name == 'Object':
+        return 'Object'
+
+    ancestors = set()
+    ancestors.add('Object')
+
+    c = class_one
+    while c.name != 'Object':
+        ancestors.add(c.name)
+        c = lookupClass(c.inherits)
+    
+    c = class_two
+    while c.name != 'Object':
+        if c.name in ancestors:
+            return c.name
+        c = lookupClass(c.inherits)
+    
+    return 'Object'
+
+
+# def getLeastCommonAncestor(class_one, class_two):
+#     class_one_path = set()
+#     class_two_path = set()
+    
+#     intersection = class_one_path.intersection(class_two_path)
+    
+#     while len(intersection) < 1:
+#         class_one_path.add(class_one.name)
+#         class_one = lookupClass(class_one.inherits)
+        
+#         class_two_path.add(class_two.name)
+#         class_two = lookupClass(class_two.inherits)
+        
+
+#         intersection = class_one_path.intersection(class_two_path)
+
+#     return intersection.pop()
 
 '''
 Mandar llamar a setBaseKlasses() para crear las declaraciones de las 5 clases básicas

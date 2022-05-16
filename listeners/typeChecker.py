@@ -116,7 +116,7 @@ class typeChecker(coolListener):
     def exitFeature_function(self, ctx: coolParser.Feature_functionContext):
         ctx.objectEnv.closeScope()  # remove parameter bindings on exit
         try:
-            expression_type = lookupClass(ctx.expr().dataType)
+            expression_type = getKlass(ctx.expr().dataType, ctx)
             
             returnTypeName = ctx.TYPE().getText()
             if returnTypeName == 'SELF_TYPE':
@@ -168,6 +168,12 @@ class typeChecker(coolListener):
             if case_type in present_types:
                 raise caseidenticalbranch()
             present_types.append(case_type)
+        # The type of
+        # the entire case is the join of the types of its branches. The variables declared on each branch of a case
+        # must all have distinct types.
+        lca = getLCA(present_types)
+        ctx.dataType = lca.name
+        
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         # Has a single Primary child node. fetch its dataType and pass on to parent
@@ -454,7 +460,7 @@ class typeChecker(coolListener):
 
         objectEnv.openScope()
         objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
-           
+
 
     def exitCase_stat(self, ctx:coolParser.Case_statContext):
         objectEnv, _ = getCurrentScope(ctx)
