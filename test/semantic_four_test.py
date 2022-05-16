@@ -75,19 +75,19 @@ def test_letshadows():
 def test_list():
     compile('resources/semantic/input/list.cool')
 
-# def test_methodcallsitself():
-#     compile('resources/semantic/input/methodcallsitself.cool')
+def test_methodcallsitself():
+    compile('resources/semantic/input/methodcallsitself.cool')
 
-# def test_methodnameclash():
-#     compile('resources/semantic/input/methodnameclash.cool')
-
-
-# def test_neg():
-#     compile('resources/semantic/input/neg.cool')
+def test_methodnameclash():
+    compile('resources/semantic/input/methodnameclash.cool')
 
 
-# def test_newselftype():
-#     compile('resources/semantic/input/newselftype.cool')
+def test_neg():
+    compile('resources/semantic/input/neg.cool')
+
+
+def test_newselftype():
+    compile('resources/semantic/input/newselftype.cool')
 
 
 # def test_objectdispatchabort():

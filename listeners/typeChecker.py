@@ -33,8 +33,9 @@ class typeChecker(coolListener):
     basicTypes = set(["Int", "String", "Bool"])
 
     def checkArgsParams(
-        self, args: List[coolParser.ExprContext], method: Method, methodName: str
+        self, ctx: ParseTree, method: Method, methodName: str
     ):
+        args = ctx.params # List[coolParser.ExprContext]
         if len(args) != len(method.params):
             raise Exception(
                 f"Bad call to {methodName}: {len(args)} arguments provided, {len(method.params)} expected"
@@ -43,7 +44,6 @@ class typeChecker(coolListener):
         # Check arguments against their type
         param_names = list(method.params)
         for i, arg in enumerate(args):
-            print("check args lookup")
             if lookupClass(arg.dataType).conformsTo(
                 lookupClass(method.params[param_names[i]])
             ):
@@ -231,7 +231,7 @@ class typeChecker(coolListener):
                 raise baddispatch(
                     f"{caller} object does not have method '{method_name}'"
                 )
-        self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
+        self.checkArgsParams(ctx=ctx, method=method, methodName=method_name)
         # Return type, enforce SELF_TYPE rules
         if method.type == 'SELF_TYPE' :
             ctx.dataType = k.name # class of caller
@@ -250,7 +250,7 @@ class typeChecker(coolListener):
         method = active_class.lookupMethod(methond_name)
        
         try:
-            self.checkArgsParams(args=ctx.params, method=method, methodName=methond_name)
+            self.checkArgsParams(ctx, method=method, methodName=methond_name)
         except badargs1:
             raise badmethodcallsitself()
 
