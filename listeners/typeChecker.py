@@ -1,4 +1,5 @@
 from cgitb import lookup
+from subprocess import call
 from typing import Tuple, List
 from antlr4.tree.Tree import ParseTree
 from antlr.coolListener import coolListener
@@ -9,6 +10,12 @@ from util.structure import _allClasses as classDict
 
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
 
+def getKlass(name:str, ctx: ParseTree) -> Klass:
+    if name == "SELF_TYPE":
+        _, activeClass = getCurrentScope(ctx)
+        return activeClass
+    else:
+        return lookupClass(name)
 
 def getCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes, Klass]:
     p = ctx.parentCtx
@@ -36,6 +43,7 @@ class typeChecker(coolListener):
         # Check arguments against their type
         param_names = list(method.params)
         for i, arg in enumerate(args):
+            print("check args lookup")
             if lookupClass(arg.dataType).conformsTo(
                 lookupClass(method.params[param_names[i]])
             ):
@@ -65,7 +73,6 @@ class typeChecker(coolListener):
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         name = ctx.ID().getText()
         method = ctx.activeClass.lookupMethod(name)
-
         parentClass = lookupClass(ctx.activeClass.inherits)
         if parentClass.name != "Object":
             try:
@@ -188,9 +195,7 @@ class typeChecker(coolListener):
                     raise outofscope(f"Variable '{identifier}' is out of scope")
         else:
             # is a subexpression, implement type checking for generic expressions
-            print("subexpression <", ctx.expr().getText(), ">")
-            print("subexpr dataType", ctx.expr().dataType)            
-            print("Expr class:", type(ctx.expr()))
+            print("subexpression <", ctx.expr().getText(), "> : ", ctx.expr().dataType)
 
             ctx.dataType = ctx.expr().dataType
 
@@ -227,7 +232,6 @@ class typeChecker(coolListener):
                     f"{caller} object does not have method '{method_name}'"
                 )
         self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
-        
         # Return type, enforce SELF_TYPE rules
         if method.type == 'SELF_TYPE' :
             ctx.dataType = k.name # class of caller
@@ -260,6 +264,7 @@ class typeChecker(coolListener):
 
         if ctx.TYPE():
             # check if conforms to parent type after @
+            print("lookup exist static disp")
             parent = lookupClass(ctx.TYPE().getText())
             caller_class = lookupClass(caller)
             if not caller_class.conformsTo(parent) :
@@ -357,8 +362,9 @@ class typeChecker(coolListener):
                 if declared_type == 'SELF_TYPE':
                     _, left_klass = getCurrentScope(ctx)
                 else:
+                    print("left let decl")
                     left_klass = lookupClass(declared_type)
-
+                print("right let decl")
                 right_klass = lookupClass(data_type)
 
                 if not right_klass.conformsTo(left_klass):
@@ -390,6 +396,7 @@ class typeChecker(coolListener):
             if right_side == 'SELF_TYPE':
                 right_klass = active_class
             else:
+                print("exist assignment lookup right")
                 right_klass = lookupClass(right_side)
             left_klass = lookupClass(left_side)
         
@@ -411,8 +418,8 @@ class typeChecker(coolListener):
         ctx.dataType = ctx.expr().dataType
 
     def exitIf_else(self, ctx: coolParser.If_elseContext):
-        data_type_if = lookupClass(ctx.expr(1).dataType)
-        data_type_else = lookupClass(ctx.expr(2).dataType)
+        data_type_if = getKlass(ctx.expr(1).dataType, ctx)
+        data_type_else = getKlass(ctx.expr(2).dataType, ctx)
 
         least_common_ancestor = getLeastCommonAncestor(data_type_if, data_type_else)
         ctx.dataType = least_common_ancestor

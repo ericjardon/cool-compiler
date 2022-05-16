@@ -72,8 +72,8 @@ def test_letselftype():
 def test_letshadows():
     compile('resources/semantic/input/letshadows.cool')
 
-# def test_list():
-#     compile('resources/semantic/input/list.cool')
+def test_list():
+    compile('resources/semantic/input/list.cool')
 
 # def test_methodcallsitself():
 #     compile('resources/semantic/input/methodcallsitself.cool')
@@ -112,8 +112,8 @@ def test_letshadows():
 # def test_scopes():
 #     compile('resources/semantic/input/scopes.cool')
 
-# def test_simplearith():
-#     compile('resources/semantic/input/simplearith.cool')
+def test_simplearith():
+    compile('resources/semantic/input/simplearith.cool')
 
 # def test_simplecase():
 #     compile('resources/semantic/input/simplecase.cool')
