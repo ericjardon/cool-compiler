@@ -2,6 +2,7 @@ from cgitb import lookup
 from subprocess import call
 from typing import Tuple, List
 from antlr4.tree.Tree import ParseTree
+from pytest import param
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 from util.exceptions import *
@@ -23,6 +24,12 @@ def getCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes, Klass]:
         p = p.parentCtx
     return p.objectEnv, p.activeClass
 
+def equalMethodParamTypes(params1: SymbolTable, params2: SymbolTable):
+    # Assumed both are equal length. Check if return types are equal
+    for argname1, argname2 in zip(params1.keys(), params2.keys()):
+        if params1[argname1] != params2[argname2]:
+            return False
+    return True
 
 class typeChecker(coolListener):
     """
@@ -44,8 +51,8 @@ class typeChecker(coolListener):
         # Check arguments against their type
         param_names = list(method.params)
         for i, arg in enumerate(args):
-            if lookupClass(arg.dataType).conformsTo(
-                lookupClass(method.params[param_names[i]])
+            if getKlass(arg.dataType, ctx).conformsTo(
+                getKlass(method.params[param_names[i]], ctx)
             ):
                 continue
             else:
@@ -77,9 +84,11 @@ class typeChecker(coolListener):
         if parentClass.name != "Object":
             try:
                 parentMethod = parentClass.lookupMethod(name)
-                if len(parentMethod.params) != len(method.params):
+                if len(parentMethod.params) != len(method.params) \
+                    or parentMethod.type != method.type:
                     raise signaturechange()
-                if parentMethod.params != method.params:
+                # Param names can be overriden
+                if not equalMethodParamTypes(parentMethod.params, method.params):
                     raise overridingmethod4()
             except KeyError:
                 pass
@@ -111,7 +120,6 @@ class typeChecker(coolListener):
             
             returnTypeName = ctx.TYPE().getText()
             if returnTypeName == 'SELF_TYPE':
-                print("method return type is self_type ->", ctx.activeClass.name)
                 return_type = ctx.activeClass
             else: 
                 return_type = lookupClass(ctx.TYPE().getText())
@@ -145,7 +153,8 @@ class typeChecker(coolListener):
                     pass
             except AttributeError:
                 # Solve expression 
-                print("No primary in expr, solve")
+                print(f"No primary in expr:<{ctx.expr().getText()}>")
+                print(type(ctx.expr()))
                 pass
 
                 

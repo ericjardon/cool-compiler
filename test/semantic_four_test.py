@@ -90,12 +90,12 @@ def test_newselftype():
     compile('resources/semantic/input/newselftype.cool')
 
 
-# def test_objectdispatchabort():
-#     compile('resources/semantic/input/objectdispatchabort.cool')
+def test_objectdispatchabort():
+    compile('resources/semantic/input/objectdispatchabort.cool')
 
 
-# def test_overriderenamearg():
-#     compile('resources/semantic/input/overriderenamearg.cool')
+def test_overriderenamearg():
+    compile('resources/semantic/input/overriderenamearg.cool')
 
 # def test_overridingmethod():
 #     compile('resources/semantic/input/overridingmethod.cool')
