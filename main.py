@@ -4,7 +4,7 @@ from antlr.coolParser import coolParser
 
 from listeners.basicSemanticCheck import basicSemanticListener
 from listeners.structureBuilder import structureBuilder
-from listeners.featuresListener import featuresListener
+from listeners.featuresBuilder import featuresBuilder
 from listeners.typeChecker import typeChecker
 
 def compile(file):
@@ -17,7 +17,7 @@ def compile(file):
     
     walker.walk(structureBuilder(), tree)  # build the allClasses dict, sets inheritance
 
-    walker.walk(featuresListener(), tree)  # add feature methods and attributes
+    walker.walk(featuresBuilder(), tree)  # add feature methods and attributes
 
     walker.walk(typeChecker(), tree)
     
