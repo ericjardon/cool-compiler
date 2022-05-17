@@ -94,14 +94,12 @@ class typeChecker(coolListener):
                 pass
 
         if method.type != "SELF_TYPE":
-            print("Method return type is", method.type)
             try:
                 lookupClass(method.type)
             except KeyError:
                 raise returntypenoexist()
 
         parameters = list(method.params.items())
-        print(f"METHOD {name}({parameters})")
 
         # Add parameter type bindings in the object scope
         ctx.objectEnv.openScope()
@@ -109,7 +107,6 @@ class typeChecker(coolListener):
             ctx.objectEnv[id] = type
 
         body = ctx.expr()
-        print("Body of method <", body.getText(), ">")
         body.objectEnv = ctx.objectEnv
         body.activeClass = ctx.activeClass
 
@@ -153,7 +150,6 @@ class typeChecker(coolListener):
                     pass
             except AttributeError:
                 # Solve expression 
-                print(f"No primary in expr:<{ctx.expr().getText()}>")
                 print(type(ctx.expr()))
                 pass
 
@@ -210,8 +206,6 @@ class typeChecker(coolListener):
                     raise outofscope(f"Variable '{identifier}' is out of scope")
         else:
             # is a subexpression, implement type checking for generic expressions
-            print("subexpression <", ctx.expr().getText(), "> : ", ctx.expr().dataType)
-
             ctx.dataType = ctx.expr().dataType
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
@@ -233,9 +227,7 @@ class typeChecker(coolListener):
         caller = ctx.getChild(0).dataType  # get type of calling expression
         k = lookupClass(caller)
 
-        print("caller: <", caller, ">")
         method_name = ctx.ID().getText()
-        print("method name:", method_name)
         try:
             method = k.lookupMethod(method_name)
             # then compare formal params
@@ -273,13 +265,10 @@ class typeChecker(coolListener):
         caller = ctx.getChild(0).dataType
         k = lookupClass(caller)
 
-        print("caller: <", caller, ">")
         methodName = ctx.ID().getText()
-        print("method name:", methodName)
 
         if ctx.TYPE():
             # check if conforms to parent type after @
-            print("lookup exist static disp")
             parent = lookupClass(ctx.TYPE().getText())
             caller_class = lookupClass(caller)
             if not caller_class.conformsTo(parent) :
@@ -377,9 +366,7 @@ class typeChecker(coolListener):
                 if declared_type == 'SELF_TYPE':
                     _, left_klass = getCurrentScope(ctx)
                 else:
-                    print("left let decl")
                     left_klass = lookupClass(declared_type)
-                print("right let decl")
                 right_klass = lookupClass(data_type)
 
                 if not right_klass.conformsTo(left_klass):
@@ -411,7 +398,6 @@ class typeChecker(coolListener):
             if right_side == 'SELF_TYPE':
                 right_klass = active_class
             else:
-                print("exist assignment lookup right")
                 right_klass = lookupClass(right_side)
             left_klass = lookupClass(left_side)
         
@@ -425,7 +411,6 @@ class typeChecker(coolListener):
             msg = ",".join(missing)
             raise missingclass(msg)
 
-        print("Does", left_klass.name,"conform to",right_klass.name)
         # right_side must conform to left_side
         if not right_klass.conformsTo(left_klass):
             raise assignnoconform

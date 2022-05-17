@@ -32,7 +32,6 @@ class structureBuilder(coolListener):
         name = ctx.TYPE(0).getText()
 
         if name in classDict:
-            print("Name exists:", name)
             raise redefinedclass()
 
         inheritance = None
@@ -59,7 +58,6 @@ class structureBuilder(coolListener):
                 lookupClass(parent)
 
             except KeyError as e:
-                print("undefined parent class", e)
                 raise missingclass("Undefined parent class", parent)
 
             childKlass = lookupClass(child)            

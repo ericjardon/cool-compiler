@@ -19,7 +19,7 @@ class TreePrinter(coolListener):
             # def __str__(self):
             #     return "foo"
             # si no encuentra el atributo simplement va a escribir el nombre del nodo
-            print ("{}{}:{}".format(s, type(ctx).__name__[:-7], self.dataType))
+            print ("{}{}:{}".format(s, type(ctx).__name__[:-7], ctx.dataType))
         except:
             print ("{}{} UNTYPED".format(s, type(ctx).__name__[:-7]))
 

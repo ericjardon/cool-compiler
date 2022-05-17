@@ -6,6 +6,7 @@ from listeners.basicSemanticCheck import basicSemanticListener
 from listeners.structureBuilder import structureBuilder
 from listeners.featuresBuilder import featuresBuilder
 from listeners.typeChecker import typeChecker
+from listeners.tree import TreePrinter
 
 def compile(file):
     parser = coolParser(CommonTokenStream(coolLexer(FileStream(file))))
@@ -21,10 +22,11 @@ def compile(file):
 
     walker.walk(typeChecker(), tree)
     
-
+        
+    walker.walk(TreePrinter(), tree)
 
 def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/semantic/input/anattributenamedself.cool')
+    compile('resources/semantic/input/hairyscary.cool')
