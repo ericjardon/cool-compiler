@@ -1,5 +1,8 @@
+from cgitb import lookup
+from subprocess import call
 from typing import Tuple, List
 from antlr4.tree.Tree import ParseTree
+from pytest import param
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 from util.exceptions import *
@@ -8,6 +11,12 @@ from util.structure import _allClasses as classDict
 
 # Expression node's can store a .dataType attribute for their "runtime evaluation" type. This is compared to the stated type.
 
+def getKlass(name:str, ctx: ParseTree) -> Klass:
+    if name == "SELF_TYPE":
+        _, activeClass = getCurrentScope(ctx)
+        return activeClass
+    else:
+        return lookupClass(name)
 
 def getCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes, Klass]:
     p = ctx.parentCtx
@@ -15,6 +24,12 @@ def getCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes, Klass]:
         p = p.parentCtx
     return p.objectEnv, p.activeClass
 
+def equalMethodParamTypes(params1: SymbolTable, params2: SymbolTable):
+    # Assumed both are equal length. Check if return types are equal
+    for argname1, argname2 in zip(params1.keys(), params2.keys()):
+        if params1[argname1] != params2[argname2]:
+            return False
+    return True
 
 class typeChecker(coolListener):
     """
@@ -25,8 +40,9 @@ class typeChecker(coolListener):
     basicTypes = set(["Int", "String", "Bool"])
 
     def checkArgsParams(
-        self, args: List[coolParser.ExprContext], method: Method, methodName: str
+        self, ctx: ParseTree, method: Method, methodName: str
     ):
+        args = ctx.params # List[coolParser.ExprContext]
         if len(args) != len(method.params):
             raise Exception(
                 f"Bad call to {methodName}: {len(args)} arguments provided, {len(method.params)} expected"
@@ -35,8 +51,8 @@ class typeChecker(coolListener):
         # Check arguments against their type
         param_names = list(method.params)
         for i, arg in enumerate(args):
-            if lookupClass(arg.dataType).conformsTo(
-                lookupClass(method.params[param_names[i]])
+            if getKlass(arg.dataType, ctx).conformsTo(
+                getKlass(method.params[param_names[i]], ctx)
             ):
                 continue
             else:
@@ -64,14 +80,15 @@ class typeChecker(coolListener):
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         name = ctx.ID().getText()
         method = ctx.activeClass.lookupMethod(name)
-
         parentClass = lookupClass(ctx.activeClass.inherits)
         if parentClass.name != "Object":
             try:
                 parentMethod = parentClass.lookupMethod(name)
-                if len(parentMethod.params) != len(method.params):
+                if len(parentMethod.params) != len(method.params) \
+                    or parentMethod.type != method.type:
                     raise signaturechange()
-                if parentMethod.params != method.params:
+                # Param names can be overriden
+                if not equalMethodParamTypes(parentMethod.params, method.params):
                     raise overridingmethod4()
             except KeyError:
                 pass
@@ -83,7 +100,6 @@ class typeChecker(coolListener):
                 raise returntypenoexist()
 
         parameters = list(method.params.items())
-        print(f"METHOD {name}({parameters})")
 
         # Add parameter type bindings in the object scope
         ctx.objectEnv.openScope()
@@ -91,40 +107,53 @@ class typeChecker(coolListener):
             ctx.objectEnv[id] = type
 
         body = ctx.expr()
-        print("Body of method <", body.getText(), ">")
         body.objectEnv = ctx.objectEnv
         body.activeClass = ctx.activeClass
 
     def exitFeature_function(self, ctx: coolParser.Feature_functionContext):
         ctx.objectEnv.closeScope()  # remove parameter bindings on exit
         try:
-            expression_type = lookupClass(ctx.expr().dataType)
-            return_type = lookupClass(ctx.TYPE().getText())
+            expression_type = getKlass(ctx.expr().dataType, ctx)
+            
+            returnTypeName = ctx.TYPE().getText()
+            if returnTypeName == 'SELF_TYPE':
+                return_type = ctx.activeClass
+            else: 
+                return_type = lookupClass(ctx.TYPE().getText())
+
             if not expression_type.conformsTo(return_type):
                 raise lubtest("Expression type: ", expression_type.name, "must conform to return type: ", return_type.name)
         except AttributeError:
             pass
 
     def enterFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
-        name = ctx.ID().getText()
-        type = ctx.TYPE().getText()
 
-        # Look up the atribute in the class hierarchy, if it is found, raise attroverride, otherwise add it to current active class
-        try:
-            ctx.activeClass.lookupAttribute(name)
-            raise attroverride()
-        except KeyError:
-            ctx.activeClass.addAttribute(name, type)
+        # Type checking
         if ctx.expr():
             try: 
-                expr = ctx.expr().primary().getText()
+                subexpr = ctx.expr().primary()
+                if subexpr.ID():  # assigning a primary
+                    if subexpr.ID().getText() == 'self':
+                        # check conforms to static type
+                        _, activeClass = getCurrentScope(ctx)
+                        static_type = lookupClass(ctx.TYPE().getText())
+                        if not activeClass.conformsTo(static_type):
+                            raise attrbadinit(f"'self' does not conform to stated type: {static_type.name}")
+                        return
+                    try:
+                        ctx.objectEnv[subexpr.getText()]
+                    except KeyError as e:
+                        print(e)
+                        raise attrbadinit(e.__repr__())
+                else:
+                    # Is a literal value
+                    pass
             except AttributeError:
                 # Solve expression 
+                print(type(ctx.expr()))
                 pass
-            try:
-                ctx.objectEnv[expr]
-            except KeyError:
-                raise attrbadinit()
+
+                
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
@@ -135,6 +164,11 @@ class typeChecker(coolListener):
             if case_type in present_types:
                 raise caseidenticalbranch()
             present_types.append(case_type)
+        # The type is the join of the types of its branches. 
+        # All present_types should be distinct
+        lca = getLCA(present_types)
+        ctx.dataType = lca.name
+        
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         # Has a single Primary child node. fetch its dataType and pass on to parent
@@ -142,7 +176,6 @@ class typeChecker(coolListener):
         try:
             ctx.dataType = primary.dataType
         except AttributeError:
-            print(primary.__dict__)
             print(f"Primary expression {ctx.getText()} has no datatype")
 
     def exitPrimary(self, ctx: coolParser.PrimaryContext):
@@ -154,18 +187,24 @@ class typeChecker(coolListener):
             ctx.dataType = "Bool"
         elif ctx.ID():  # is a variable name, assign type from scope
             object_env, active_class = getCurrentScope(ctx)
+            identifier = ctx.ID().getText()
             # Check self keyword
-            if ctx.ID().getText() == "self":
+            if identifier == "self":
                 ctx.dataType = active_class.name
                 return
             # Look for variable in this scope, if it doesn't exist, raise out of scope exception
             try:
-                ctx.dataType = object_env[ctx.ID().getText()]
+                # try object scope
+                ctx.dataType = object_env[identifier]
             except KeyError:
-                raise outofscope()
+                # try class scope
+                try: 
+                    ctx.dataType = active_class.lookupAttribute(identifier)
+                except KeyError as e:
+                    print(e)
+                    raise outofscope(f"Variable '{identifier}' is out of scope")
         else:
             # is a subexpression, implement type checking for generic expressions
-            print("subexpression <", ctx.expr().getText(), ">")
             ctx.dataType = ctx.expr().dataType
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
@@ -180,15 +219,14 @@ class typeChecker(coolListener):
                     raise badequalitytest2()
                 else:
                     raise badequalitytest()  # any type discrepancy should throw error
+        ctx.dataType = 'Bool'
 
     def exitDispatch(self, ctx: coolParser.DispatchContext):
         # Check validity of the dispatch: method must be defined, types must conform
         caller = ctx.getChild(0).dataType  # get type of calling expression
         k = lookupClass(caller)
 
-        print("caller: <", caller, ">")
         method_name = ctx.ID().getText()
-        print("method name:", method_name)
         try:
             method = k.lookupMethod(method_name)
             # then compare formal params
@@ -199,8 +237,12 @@ class typeChecker(coolListener):
                 raise baddispatch(
                     f"{caller} object does not have method '{method_name}'"
                 )
-
-        self.checkArgsParams(args=ctx.params, method=method, methodName=method_name)
+        self.checkArgsParams(ctx=ctx, method=method, methodName=method_name)
+        # Return type, enforce SELF_TYPE rules
+        if method.type == 'SELF_TYPE' :
+            ctx.dataType = k.name # class of caller
+        else:
+            ctx.dataType = method.type
 
     def enterMethod_call(self, ctx: coolParser.Method_callContext):
         object_env, active_class = getCurrentScope(ctx)
@@ -214,7 +256,7 @@ class typeChecker(coolListener):
         method = active_class.lookupMethod(methond_name)
        
         try:
-            self.checkArgsParams(args=ctx.params, method=method, methodName=methond_name)
+            self.checkArgsParams(ctx, method=method, methodName=methond_name)
         except badargs1:
             raise badmethodcallsitself()
 
@@ -222,9 +264,7 @@ class typeChecker(coolListener):
         caller = ctx.getChild(0).dataType
         k = lookupClass(caller)
 
-        print("caller: <", caller, ">")
         methodName = ctx.ID().getText()
-        print("method name:", methodName)
 
         if ctx.TYPE():
             # check if conforms to parent type after @
@@ -233,11 +273,11 @@ class typeChecker(coolListener):
             if not caller_class.conformsTo(parent) :
                 if parent.conformsTo(caller_class):
                     raise badstaticdispatch()
-                raise trickyatdispatch2()
-                
+                raise trickyatdispatch2() 
 
         try:
             method = k.lookupMethod(methodName)
+            ctx.dataType = method.type
             # then compare formal params
         except KeyError:
             if caller == "Int":
@@ -247,12 +287,19 @@ class typeChecker(coolListener):
                     f"{caller} object does not have method '{methodName}'"
                 )
 
+        # Return type, enforce SELF_TYPE rules
+        if method.type == 'SELF_TYPE' :
+            ctx.dataType = k.name # class of caller
+        else:
+            ctx.dataType = method.type  
+
     def exitAddition(self, ctx: coolParser.AdditionContext):
         left_type = ctx.expr(0).dataType
         right_type = ctx.expr(1).dataType
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        ctx.dataType = 'Int'
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
         left_type = ctx.expr(0).dataType
@@ -261,12 +308,15 @@ class typeChecker(coolListener):
         if left_type != "Int" or right_type != "Int":
             raise badarith()
 
+        ctx.dataType = 'Int'
+
     def exitDivision(self, ctx: coolParser.DivisionContext):
         left_type = ctx.expr(0).dataType
         right_type = ctx.expr(1).dataType
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        ctx.dataType = 'Int'
 
     def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
         left_type = ctx.expr(0).dataType
@@ -274,6 +324,8 @@ class typeChecker(coolListener):
 
         if left_type != "Int" or right_type != "Int":
             raise badarith()
+        
+        ctx.dataType = 'Int'
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         # all subexpressions of while have been evaluated.
@@ -282,6 +334,8 @@ class typeChecker(coolListener):
         predicate = ctx.expr()[0]
         if predicate.dataType != "Bool":
             raise badwhilecond("While predicate must evaluate to a Bool value")
+
+        ctx.dataType = 'Object'  # always
 
     def enterLet_expr(self, ctx: coolParser.Let_exprContext):
         # Parent node to Let_decl
@@ -292,6 +346,10 @@ class typeChecker(coolListener):
     def exitLet_expr(self, ctx: coolParser.Let_exprContext):
         object_env, active_class = getCurrentScope(ctx)
         object_env.closeScope()
+        if ctx.expr().dataType == 'SELF_TYPE':
+            ctx.dataType = active_class.name
+        else:
+            ctx.dataType = ctx.expr().dataType
 
     def enterLet_decl(self, ctx: coolParser.Let_declContext):
         # Store the variable in current Scope
@@ -305,13 +363,22 @@ class typeChecker(coolListener):
         if ctx.expr():  # has initialization
             try:
                 data_type = ctx.expr().dataType
-                if not lookupClass(data_type).conformsTo(lookupClass(declared_type)):
+                if declared_type == 'SELF_TYPE':
+                    _, left_klass = getCurrentScope(ctx)
+                else:
+                    left_klass = lookupClass(declared_type)
+                right_klass = lookupClass(data_type)
+
+                if not right_klass.conformsTo(left_klass):
                     raise letbadinit(
                         f"Provided {data_type} does not conform to {declared_type}"
                     )
 
             except AttributeError:
                 print(f"{ctx.expr().getText()} expression has no dataType")
+            except KeyError as e:
+                print("Let declaration error", e)
+                raise Exception()
 
     def enterNew(self, ctx: coolParser.NewContext):
         # Store the TYPE and return it to parent
@@ -319,14 +386,21 @@ class typeChecker(coolListener):
 
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
         # receive the dataType from the child node
-        object_env, _ = getCurrentScope(ctx)
+        object_env, active_class = getCurrentScope(ctx)
         id = ctx.ID().getText()
-        left_side = object_env[id]
+        if id == 'self':
+            left_side = active_class.name
+        else:
+            left_side = object_env[id]
         right_side = ctx.expr().dataType
 
         try:
-            right_klass = lookupClass(right_side)
+            if right_side == 'SELF_TYPE':
+                right_klass = active_class
+            else:
+                right_klass = lookupClass(right_side)
             left_klass = lookupClass(left_side)
+        
         except Exception as _e:
             missing = []
             existing = classDict.keys()
@@ -337,13 +411,48 @@ class typeChecker(coolListener):
             msg = ",".join(missing)
             raise missingclass(msg)
 
-        # rightSide must conform to leftSide
+        # right_side must conform to left_side
         if not right_klass.conformsTo(left_klass):
             raise assignnoconform
+        
+        ctx.dataType = ctx.expr().dataType
 
     def exitIf_else(self, ctx: coolParser.If_elseContext):
-        data_type_if = lookupClass(ctx.expr(1).dataType)
-        data_type_else = lookupClass(ctx.expr(2).dataType)
+        data_type_if = getKlass(ctx.expr(1).dataType, ctx)
+        data_type_else = getKlass(ctx.expr(2).dataType, ctx)
 
         least_common_ancestor = getLeastCommonAncestor(data_type_if, data_type_else)
         ctx.dataType = least_common_ancestor
+
+    
+    def exitBlock(self, ctx:coolParser.BlockContext):
+        # Return type is last expression's return type
+        exprs = ctx.expr()
+        ctx.dataType = exprs[-1].dataType
+
+    def exitLess_than(self, ctx:coolParser.Less_thanContext):
+        ctx.dataType = 'Bool'
+
+    def exitLess_or_equal(self, ctx:coolParser.Less_or_equalContext):
+        ctx.dataType = 'Bool'
+
+    def exitNot(self, ctx:coolParser.NotContext):
+        if ctx.expr().dataType == 'Bool':
+            ctx.dataType = 'Bool'
+        else:
+            raise Exception("Type Error: argument of 'not' must be Bool")
+
+
+    def enterCase_stat(self, ctx:coolParser.Case_statContext):
+        objectEnv, _ = getCurrentScope(ctx)
+
+        objectEnv.openScope()
+        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
+
+
+    def exitCase_stat(self, ctx:coolParser.Case_statContext):
+        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv.closeScope()
+
+    def exitIsvoid(self, ctx:coolParser.IsvoidContext):
+        ctx.dataType = 'Bool'
