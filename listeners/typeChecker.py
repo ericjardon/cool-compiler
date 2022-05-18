@@ -164,9 +164,8 @@ class typeChecker(coolListener):
             if case_type in present_types:
                 raise caseidenticalbranch()
             present_types.append(case_type)
-        # The type of
-        # the entire case is the join of the types of its branches. The variables declared on each branch of a case
-        # must all have distinct types.
+        # The type is the join of the types of its branches. 
+        # All present_types should be distinct
         lca = getLCA(present_types)
         ctx.dataType = lca.name
         
@@ -278,6 +277,7 @@ class typeChecker(coolListener):
 
         try:
             method = k.lookupMethod(methodName)
+            ctx.dataType = method.type
             # then compare formal params
         except KeyError:
             if caller == "Int":
@@ -431,6 +431,9 @@ class typeChecker(coolListener):
         ctx.dataType = exprs[-1].dataType
 
     def exitLess_than(self, ctx:coolParser.Less_thanContext):
+        ctx.dataType = 'Bool'
+
+    def exitLess_or_equal(self, ctx:coolParser.Less_or_equalContext):
         ctx.dataType = 'Bool'
 
     def exitNot(self, ctx:coolParser.NotContext):
