@@ -10,7 +10,7 @@ tpl_var_decl = Template("""
 $varname:   .word 0                         # variable valor inicial 0""")
 
 tpl_end = """
-    li	    $v0     10                      # 10 para terminar la emulaciÃ³n
+    li	    $v0     10                      # 10 para terminar la emulación
     syscall"""
 
 tpl_immediate = Template("""
@@ -76,10 +76,17 @@ $prev
 """)
 
 tpl_string_const_decl = Template("""
+<<<<<<< HEAD
 $name:      .asciiz $content                # DeclaraciÃ³n de string""")
 
 tpl_string_const = Template("""
     la      $$a0        $name               # Cargar direcciÃ³n de variable""")
+=======
+$name:      .asciiz $content                # Declaración de string""")
+
+tpl_string_const = Template("""
+    la      $$a0        $name               # Cargar dirección de variable""")
+>>>>>>> 69dc445b3f39a06384ae4609b812062c2e960ef8
 
 tpl_if = Template("""
 $prev
@@ -124,3 +131,7 @@ tpl_push_arg = """
 tpl_call = Template("""
 $push_arguments
     jal     $name                           # transfer control!""")
+<<<<<<< HEAD
+=======
+
+>>>>>>> 69dc445b3f39a06384ae4609b812062c2e960ef8
