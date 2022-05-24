@@ -7,8 +7,12 @@ from listeners.structureBuilder import structureBuilder
 from listeners.featuresBuilder import featuresBuilder
 from listeners.typeChecker import typeChecker
 from listeners.tree import TreePrinter
+from listeners.dataSegment import dataSegment
 
-def compile(file):
+OUT_FILE = lambda x : f'out{x}.asm'
+test_counter = 0
+
+def compile(file, treeprinter=False):
     parser = coolParser(CommonTokenStream(coolLexer(FileStream(file))))
     tree = parser.program()
 
@@ -22,11 +26,18 @@ def compile(file):
 
     walker.walk(typeChecker(), tree)
     
-        
-    walker.walk(TreePrinter(), tree)
+    if treeprinter:
+        walker.walk(TreePrinter(), tree)
+
+    dotData = dataSegment()
+
+    walker.walk(dotData, tree)
+
+    with open(OUT_FILE(test_counter), "w") as writer:
+        writer.write(dotData.r)
 
 def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/semantic/input/hairyscary.cool')
+    compile('resources/semantic/codegen/input/fibo.cool')

@@ -1,34 +1,5 @@
 from string import Template
 
-data_fixed_tags = """
-    .align  2
-    .globl  Main_protObj
-    .globl  Int_protObj
-    .globl  String_protObj
-    .globl  bool_const0
-    .globl  bool_const1
-    .globl  _int_tag
-    .globl  _bool_tag
-    .globl  _string_tag
-_int_tag:
-    .word   2
-_bool_tag:
-    .word   3
-_string_tag:
-    .word   4"""  # all other _class_tag continue
-
-data_MemMgr = """
-    .globl  _MemMgr_INITIALIZER
-_MemMgr_INITIALIZER:
-    .word NoGC Init
-    .globl _MemMgr_COLLECTOR
-_MemMgr_COLLECTOR:
-    .word _NoGC_Collect
-    .globl _MemMgr_TEST
-_MemMgr_TEST:
-    .word 0
-    .word −1"""
-
 tpl_start_text = """
     .text                                   # INICIA SEGMENTO DE TEXTO (CODIGO)"""
 
@@ -75,8 +46,7 @@ $right
     j       label_exit_lt$n
 lt$n:
     li      $$a0    1
-label_exit_lt$n:
-""")
+label_exit_lt$n:""")
 
 tpl_print_int = Template("""
 $prev
@@ -92,8 +62,7 @@ tpl_var = Template("""
     lw      $$a0        $name               # Usar variable""")
 
 tpl_var_from_stack = Template("""
-    lw      $$a0        $offset($$fp)      # Referencia a $name
-""")
+    lw      $$a0        $offset($$fp)      # Referencia a $name""")
 
 tpl_asignacion = Template("""
 $prev
@@ -101,8 +70,7 @@ $prev
 
 tpl_asignacion_from_stack = Template("""
 $prev
-    sw      $$a0        $offset($$fp)      # Referencia a $name
-""")
+    sw      $$a0        $offset($$fp)      # Referencia a $name""")
 
 tpl_string_const_decl = Template("""
 $name:      .asciiz $content                # Declaración de string""")
@@ -154,13 +122,28 @@ tpl_call = Template("""
 $push_arguments
     jal     $name                           # transfer control!""")
 
+# GLOBAL TAGS
+tpl_global_tags_start = Template("""
+    .align  2
+    .globl  class_nameTab
+$prototype_tags
+    .globl  bool_const0
+    .globl  bool_const1
+$class_tags""")
+# *note: if we include both definitions for true and false, we don't need a Bool prototype or Initializer.
 
-# CLASS TAGS
+tpl_prototype_tag = Template("""
+    .globl  $name$_protObj""")
 
 tpl_class_tag = Template("""
+    .globl  _$name$_tag""")  # lowercase
+
+
+# CLASS TAGS
+tpl_class_tag = Template("""
 _$name_tag:
-    .word   $n
-""")
+    .word   $n"""
+)
 
 # OBJECT LAYOUT
 tpl_const_obj_start = Template("""
@@ -179,33 +162,36 @@ tpl_string_atr = Template("""
     .word $len_name
     .ascii $content
     .byte 0
-    .align 2""")
+    .align 2"""
+)
 
 tpl_int_atr = Template(""" 
-    .word $content""")
+    .word $content"""
+)
 
 tpl_bool_atr = Template(""" 
-    .word $value""")
+    .word $value"""
+)
 
 # CLASS TABLES
 
 tpl_class_name_table = Template("""
 class_nameTab:
-$names
-""")
+$names"""
+)
 tpl_class_name = Template("""
-    .word   str_const$n
-""")
+    .word   str_const$n"""
+)
 
 tpl_object_table = Template("""
 class_objTab:
-$objects
-""")
+$objects"""
+)
 
 tpl_object_info = Template("""
     .word   $name_protObj
-    .word   $name_init
-""")
+    .word   $name_init"""
+)
 
 # DISPATCH TABLES
 tpl_obj_dispatch_table = Template("""
@@ -270,8 +256,7 @@ tpl_non_init_prototype_object = Template("""
 $name_protObj:
     .word   $class_id
     .word   $size
-    .word   $dispatch
-"""
+    .word   $dispatch"""
 )
 
 tpl_init_prototype_object = Template("""
@@ -280,8 +265,7 @@ $name_protObj:
     .word   $class_id
     .word   $size
     .word   $dispatch
-    .word   0
-"""
+    .word   0"""
 )
 
 tpl_string_prototype_object = Template("""
@@ -291,6 +275,19 @@ $name_protObj:
     .word   $size
     .word   $dispatch
     .word   $len_name
-    .word   0
-"""
+    .word   0"""
 )
+
+# HEAP START
+tpl_heap_start =  Template("""
+    .globl  heap_start
+heap_start:
+    .word   0""")
+
+
+# ---------------- end delivery-5
+
+tpl_init_decl = Template("""
+    .globl  $name_init"""
+)
+
