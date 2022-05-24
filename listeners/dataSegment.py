@@ -35,11 +35,27 @@ class dataSegment(coolListener):
             class_tags = class_tags
         )
 
+    def MemMgrBoilerPlate(self):
+        self.result += asm.tpl_data_MemMgr
+
     def enterProgram(self, ctx: coolParser.ProgramContext):
         self.result += asm.tpl_start_data
 
         # Add classes protObjs
         self.appendGlobalLabels()
+        # self.appendClassTagIDs() # counter at 2 -- JC
+        self.MemMgrBoilerPlate()
+    
+    def exitProgram(self, ctx: coolParser.ProgramContext):
+        # we know about all constants in the program.
+
+        # print constants -- JC
+        # name Table -- Eric
+        # object Table -- Eric
+        # dispatch Table (ya están hechas) -- Eric
+        # prototypes -- Eric
+        # heap -- JC
+        pass
 
     # On enter literal value, add it to str or int stack
 

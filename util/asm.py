@@ -139,6 +139,17 @@ tpl_global_class_tag = Template(("""
     .globl  _${name}_tag"""))  # lowercase
 
 
+tpl_data_MemMgr = """
+    .globl  _MemMgr_INITIALIZER
+_MemMgr_INITIALIZER:
+    .word NoGC Init
+    .globl _MemMgr_COLLECTOR
+_MemMgr_COLLECTOR:
+    .word _NoGC_Collect
+    .globl _MemMgr_TEST
+_MemMgr_TEST:
+    .word 0"""
+
 # CLASS TAGS
 tpl_class_tag = Template("""
 _$name_tag:
