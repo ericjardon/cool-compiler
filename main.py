@@ -34,7 +34,8 @@ def compile(file, treeprinter=False):
     walker.walk(dotData, tree)
 
     with open(OUT_FILE(test_counter), "w") as writer:
-        writer.write(dotData.r)
+        writer.write(dotData.result)
+    writer.close()
 
 def dummy():
     raise SystemExit(1)

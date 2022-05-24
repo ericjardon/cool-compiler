@@ -132,11 +132,11 @@ $prototype_tags
 $class_tags""")
 # *note: if we include both definitions for true and false, we don't need a Bool prototype or Initializer.
 
-tpl_prototype_tag = Template("""
-    .globl  $name$_protObj""")
+tpl_prototype_tag = Template(("""
+    .globl  ${name}_protObj"""))
 
-tpl_class_tag = Template("""
-    .globl  _$name$_tag""")  # lowercase
+tpl_global_class_tag = Template(("""
+    .globl  _${name}_tag"""))  # lowercase
 
 
 # CLASS TAGS

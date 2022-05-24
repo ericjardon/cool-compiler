@@ -49,7 +49,7 @@ class dataSegment(coolListener):
         self.result += asm.tpl_string_const_decl.substitute(
             name = ctx.label, content = ctx.getText()
         ) """
-
+# Write printMyShit function  
 
 def getPrototypeTags() -> str:
     substitution = ''
@@ -67,7 +67,7 @@ def getClassTags() -> str:
     substitution = ''
     for classname in CONSTANT_CLASSES:
         substitution += (
-            asm.tpl_class_tag.substitute(
+            asm.tpl_global_class_tag.substitute(
                 name=classname
             )
         )
