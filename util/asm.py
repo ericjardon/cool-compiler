@@ -1,5 +1,34 @@
 from string import Template
 
+data_fixed_tags = """
+    .align  2
+    .globl  Main_protObj
+    .globl  Int_protObj
+    .globl  String_protObj
+    .globl  bool_const0
+    .globl  bool_const1
+    .globl  _int_tag
+    .globl  _bool_tag
+    .globl  _string_tag
+_int_tag:
+    .word   2
+_bool_tag:
+    .word   3
+_string_tag:
+    .word   4"""  # all other _class_tag continue
+
+data_MemMgr = """
+    .globl  _MemMgr_INITIALIZER
+_MemMgr_INITIALIZER:
+    .word NoGC Init
+    .globl _MemMgr_COLLECTOR
+_MemMgr_COLLECTOR:
+    .word _NoGC_Collect
+    .globl _MemMgr_TEST
+_MemMgr_TEST:
+    .word 0
+    .word −1"""
+
 tpl_start_text = """
     .text                                   # INICIA SEGMENTO DE TEXTO (CODIGO)"""
 
@@ -76,17 +105,10 @@ $prev
 """)
 
 tpl_string_const_decl = Template("""
-<<<<<<< HEAD
-$name:      .asciiz $content                # DeclaraciÃ³n de string""")
-
-tpl_string_const = Template("""
-    la      $$a0        $name               # Cargar direcciÃ³n de variable""")
-=======
 $name:      .asciiz $content                # Declaración de string""")
 
 tpl_string_const = Template("""
     la      $$a0        $name               # Cargar dirección de variable""")
->>>>>>> 69dc445b3f39a06384ae4609b812062c2e960ef8
 
 tpl_if = Template("""
 $prev
@@ -131,7 +153,144 @@ tpl_push_arg = """
 tpl_call = Template("""
 $push_arguments
     jal     $name                           # transfer control!""")
-<<<<<<< HEAD
-=======
 
->>>>>>> 69dc445b3f39a06384ae4609b812062c2e960ef8
+
+# CLASS TAGS
+
+tpl_class_tag = Template("""
+_$name_tag:
+    .word   $n
+""")
+
+# OBJECT LAYOUT
+tpl_const_obj_start = Template("""
+    .word   -1
+$name:
+    .word   $class_id
+    .word   $size
+    .word   $dispatch
+$attributes"""
+)
+
+
+# ATTRIBUTES
+
+tpl_string_atr = Template(""" 
+    .word $len_name
+    .ascii $content
+    .byte 0
+    .align 2""")
+
+tpl_int_atr = Template(""" 
+    .word $content""")
+
+tpl_bool_atr = Template(""" 
+    .word $value""")
+
+# CLASS TABLES
+
+tpl_class_name_table = Template("""
+class_nameTab:
+$names
+""")
+tpl_class_name = Template("""
+    .word   str_const$n
+""")
+
+tpl_object_table = Template("""
+class_objTab:
+$objects
+""")
+
+tpl_object_info = Template("""
+    .word   $name_protObj
+    .word   $name_init
+""")
+
+# DISPATCH TABLES
+tpl_obj_dispatch_table = Template("""
+Object_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy"""
+)
+
+tpl_io_dispatch_table = Template("""
+IO_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+    .word   IO.out_string
+    .word   IO.out_int
+    .word   IO.in_string
+    .word   IO.in_int"""
+)
+
+tpl_int_dispatch_table = Template("""
+Int_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy"""
+)
+
+tpl_string_dispatch_table = Template("""
+String_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+    .word   String.length
+    .word   String.concat
+    .word   String.substr"""
+)
+
+tpl_bool_dispatch_table = Template("""
+Bool_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy"""
+)
+
+tpl_main_dispatch_table = Template("""
+Main_dispTab:
+    .word   Object.abort
+    .word   Object.type_name
+    .word   Object.copy
+    .word   IO.out_string
+    .word   IO.out_int
+    .word   IO.in_string
+    .word   IO.in_int
+    .word   Main.fact
+    .word   Main.main"""
+)
+
+# PROTOTYPE OBJECTS
+
+tpl_non_init_prototype_object = Template("""
+    .word   -1
+$name_protObj:
+    .word   $class_id
+    .word   $size
+    .word   $dispatch
+"""
+)
+
+tpl_init_prototype_object = Template("""
+    .word   -1
+$name_protObj:
+    .word   $class_id
+    .word   $size
+    .word   $dispatch
+    .word   0
+"""
+)
+
+tpl_string_prototype_object = Template("""
+    .word   -1
+$name_protObj:
+    .word   $class_id
+    .word   $size
+    .word   $dispatch
+    .word   $len_name
+    .word   0
+"""
+)
