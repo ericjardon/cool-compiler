@@ -190,7 +190,7 @@ class dataSegment(coolListener):
     def addNullStringConst(self):
         # call once
         name = 'str_const'+str(self.str_constants_count)
-        self.str_constants_text += asm.tpl_null_string_const(
+        self.str_constants_text += asm.tpl_null_string_const.substitute(
             name=name,
             zero_int = self.registered_ints[0]
         )
