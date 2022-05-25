@@ -212,7 +212,7 @@ Object_dispTab:
     .word   Object.copy"""
 )
 
-tpl_io_dispatch_table = Template("""
+tpl_io_dispatch_table = """
 IO_dispTab:
     .word   Object.abort
     .word   Object.type_name
@@ -221,16 +221,16 @@ IO_dispTab:
     .word   IO.out_int
     .word   IO.in_string
     .word   IO.in_int"""
-)
 
-tpl_int_dispatch_table = Template("""
+
+tpl_int_dispatch_table = """
 Int_dispTab:
     .word   Object.abort
     .word   Object.type_name
     .word   Object.copy"""
-)
 
-tpl_string_dispatch_table = Template("""
+
+tpl_string_dispatch_table = """
 String_dispTab:
     .word   Object.abort
     .word   Object.type_name
@@ -238,16 +238,14 @@ String_dispTab:
     .word   String.length
     .word   String.concat
     .word   String.substr"""
-)
 
-tpl_bool_dispatch_table = Template("""
+tpl_bool_dispatch_table = """
 Bool_dispTab:
     .word   Object.abort
     .word   Object.type_name
     .word   Object.copy"""
-)
 
-tpl_main_dispatch_table = Template("""
+tpl_main_dispatch_table = """
 Main_dispTab:
     .word   Object.abort
     .word   Object.type_name
@@ -258,7 +256,6 @@ Main_dispTab:
     .word   IO.in_int
     .word   Main.fact
     .word   Main.main"""
-)
 
 # PROTOTYPE OBJECTS
 

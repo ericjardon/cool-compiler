@@ -18,13 +18,24 @@ BUILTIN_STRINGS = [
 
 BUILTIN_INTS = [0, 1]
 
+KNOWN_SIZES = {
+    'Object':3,
+    'IO':3,
+    'Int':4,
+    'Bool':4,
+    'String': 5, ## why?
+    'Main': 3,
+}
+
 
 class dataSegment(coolListener):
     def __init__(self):
         self.result = ''  # string builder
         self.str_constants_count = 0
         self.int_constants_count = 0
-
+        self.class_id = {}  # name to tag mapping
+        for tag, name in enumerate(classesDict.keys()):
+            self.class_id[name] = tag
     
     def appendGlobalLabels(self):
         prototype_tags = getPrototypeTags()
@@ -34,6 +45,25 @@ class dataSegment(coolListener):
             prototype_tags=prototype_tags,
             class_tags = class_tags
         )
+
+    def appendDispatchTables(self):
+        # Object, IO, Int, Bool, String, Main
+        self.result += asm.tpl_obj_dispatch_table
+        self.result += asm.tpl_io_dispatch_table
+        self.result += asm.tpl_int_dispatch_table
+        self.result += asm.tpl_string_dispatch_table
+        self.result += asm.tpl_main_dispatch_table
+
+    def appendBasePrototypes(self):
+        # Object, IO, Int, Bool, String, Main
+        self.result += asm.tpl_non_init_prototype_object.substitute(
+            name="Object",
+            class_id=self.class_id["Object"],
+            size=KNOWN_SIZES["Object"],
+            dispatch="Object_dispTab"
+        )
+        # continue...
+
 
     def MemMgrBoilerPlate(self):
         self.result += asm.tpl_data_MemMgr
@@ -53,6 +83,8 @@ class dataSegment(coolListener):
         # name Table -- Eric
         # object Table -- Eric
         # dispatch Table (ya están hechas) -- Eric
+        self.appendDispatchTables()
+        self.appendBasePrototypes()
         # prototypes -- Eric
         # heap -- JC
         pass
