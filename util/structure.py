@@ -90,7 +90,7 @@ class Klass():
         else:
             return _allClasses[self.inherits].lookupMethod(name)
     
-    def getAvailableMethods(self, stack) -> list:
+    def getAvailableMethods(self, stack) -> list[str]:
         for method in self.methods.keys():
                 stack.append(self.name+"."+method)
         if self.name == "Object":

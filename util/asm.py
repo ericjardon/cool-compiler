@@ -3,8 +3,7 @@ from string import Template
 tpl_start_text = """
     .text                                   # INICIA SEGMENTO DE TEXTO (CODIGO)"""
 
-tpl_start_data = """
-    .data                                   # INICIA SEGMENTO DE DATOS (VARIABLES)"""
+tpl_start_data = """\t.data                                   # INICIA SEGMENTO DE DATOS (VARIABLES)"""
 
 tpl_var_decl = Template("""
 $varname:   .word 0                         # variable valor inicial 0""")
@@ -125,11 +124,9 @@ $push_arguments
 # GLOBAL TAGS
 tpl_global_tags_start = Template("""
     .align  2
-    .globl  class_nameTab
-$prototype_tags
+    .globl  class_nameTab$prototype_tags
     .globl  bool_const0
-    .globl  bool_const1
-$class_tags""")
+    .globl  bool_const1$class_tags""")
 # *note: if we include both definitions for true and false, we don't need a Bool prototype or Initializer.
 
 tpl_prototype_tag = Template(("""
@@ -148,7 +145,7 @@ _MemMgr_COLLECTOR:
     .word _NoGC_Collect
     .globl _MemMgr_TEST
 _MemMgr_TEST:
-    .word 0"""
+    .word   0"""
 
 # CLASS TAGS
 tpl_class_tag = Template("""
@@ -202,12 +199,11 @@ tpl_object_info = Template("""
 # DISPATCH TABLES
 
 tpl_dispatch_table = Template("""
-${class_name}_dispTab:
-$methods"""
+${class_name}_dispTab:$methods"""
 )
 
 tpl_method_name = Template("""
-    .word   ${class_name}.$method_name"""
+    .word   $method_disp"""
 )
 
 # PROTOTYPE OBJECTS

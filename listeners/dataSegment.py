@@ -54,8 +54,12 @@ class dataSegment(coolListener):
         )
 
     def appendDispatchTables(self):
-        # Object, IO, Int, Bool, String, Main
-        pass
+        for class_name in classesDict.keys():
+            methods = getDispTabMethods(class_name)
+            self.result += asm.tpl_dispatch_table.substitute(
+                class_name=class_name,
+                methods=methods
+            )
 
     def appendBasePrototypes(self):
         # Object, IO, Int, Bool, String, Main
@@ -128,7 +132,7 @@ class dataSegment(coolListener):
         self.addObjectTable()
         # dispatch Table (ya están hechas) -- Eric
         self.appendDispatchTables()
-        self.appendBasePrototypes()
+        #self.appendBasePrototypes()
         # prototypes -- Eric
         self.appendHeapStart()
 
@@ -236,3 +240,15 @@ def getClassTags() -> str:
         )
     return substitution
 
+from collections import deque
+def getDispTabMethods(class_name) -> list[str]:
+    entries = ''
+
+    methods_stack = classesDict[class_name].getAvailableMethods(deque([]))
+    #print(f"{class_name} method stack:", methods_stack)
+    while methods_stack:
+        entries += asm.tpl_method_name.substitute(
+            method_disp = methods_stack.pop()
+        )
+    
+    return entries
