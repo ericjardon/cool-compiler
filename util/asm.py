@@ -208,7 +208,7 @@ tpl_method_name = Template("""
 
 # PROTOTYPE OBJECTS
 
-tpl_non_init_prototype_object = Template("""
+tpl_init_prototype_object = Template("""
     .word   -1
 ${name}_protObj:
     .word   $class_id
@@ -216,18 +216,12 @@ ${name}_protObj:
     .word   $dispatch"""
 )
 
-tpl_init_prototype_object = Template("""
-    .word   -1
-$name_protObj:
-    .word   $class_id
-    .word   $size
-    .word   $dispatch
+tpl_single_void_attribute = """
     .word   0"""
-)
 
-tpl_string_prototype_object = Template("""
+tpl_string_prototype_string = Template("""
     .word   -1
-$name_protObj:
+${name}_protObj:
     .word   $class_id
     .word   $size
     .word   $dispatch

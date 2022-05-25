@@ -2,7 +2,7 @@ import math
 
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from util.structure import _allClasses as classesDict
+from util.structure import _allClasses as classesDict, lookupClass
 import util.asm as asm
 
 CONSTANT_CLASSES = [
@@ -24,9 +24,8 @@ KNOWN_SIZES = {
     'IO':3,
     'Int':4,
     'Bool':4,
-    'String': 4,
-    'Main': 3,
-}
+    'String': 5,
+} # Main is a user defined class
 
 
 class dataSegment(coolListener):
@@ -44,7 +43,7 @@ class dataSegment(coolListener):
         for tag, name in enumerate(classesDict.keys()):
             self.class_id[name] = tag
 
-    def appendGlobalLabels(self):
+    def addGlobalLabels(self):
         prototype_tags = getPrototypeTags()
         class_tags = getClassTags()
 
@@ -53,7 +52,7 @@ class dataSegment(coolListener):
             class_tags = class_tags
         )
 
-    def appendDispatchTables(self):
+    def addDispatchTables(self):
         for class_name in classesDict.keys():
             methods = getDispTabMethods(class_name)
             self.result += asm.tpl_dispatch_table.substitute(
@@ -61,17 +60,36 @@ class dataSegment(coolListener):
                 methods=methods
             )
 
-    def appendBasePrototypes(self):
-        # Object, IO, Int, Bool, String, Main
-        self.result += asm.tpl_non_init_prototype_object.substitute(
-            name="Object",
-            class_id=self.class_id["Object"],
-            size=KNOWN_SIZES["Object"],
-            dispatch="Object_dispTab"
-        )
-        # continue...
-    
-    def appendHeapStart(self):
+    def addPrototypes(self):
+        from pprint import pprint
+        pprint(self.registered_ints)
+        for class_name in classesDict:
+            class_id = self.class_id[class_name]
+            dispatch = f"{class_name}_dispTab"
+            size = getPrototypeSize(class_name)
+            
+            if class_name == "String":
+                len_name = self.registered_ints[0]
+                self.result += asm.tpl_string_prototype_string.substitute(
+                    len_name=len_name,
+                    name=class_name,
+                    class_id=class_id,
+                    size=size,
+                    dispatch=dispatch
+                )
+            else:
+                self.result += asm.tpl_init_prototype_object.substitute(
+                    name=class_name,
+                    class_id=class_id,
+                    size=size,
+                    dispatch=dispatch
+                )
+                # Add void attributes for sizes > 3
+                for _ in range(3, size):
+                    self.result += asm.tpl_single_void_attribute
+
+
+    def addHeapStart(self):
         self.result += asm.tpl_heap_start
 
     def MemMgrBoilerPlate(self):
@@ -81,7 +99,7 @@ class dataSegment(coolListener):
         for name in classesDict.keys():
             self.addStringConst(name)
 
-    def appendConstantsText(self):
+    def addConstantsText(self):
         self.result += self.str_constants_text
         self.result += self.int_constants_text
         self.result += self.bool_constants_text
@@ -118,7 +136,7 @@ class dataSegment(coolListener):
         self.result += asm.tpl_start_data
 
         # Add classes protObjs -- Eric
-        self.appendGlobalLabels()
+        self.addGlobalLabels()
         self.addClassTagIDs()
         self.MemMgrBoilerPlate()
         self.addClassNames()
@@ -127,14 +145,12 @@ class dataSegment(coolListener):
     def exitProgram(self, ctx: coolParser.ProgramContext):
         # we know about all constants in the program.
 
-        self.appendConstantsText()
+        self.addConstantsText()
         self.addClassNameTable()
         self.addObjectTable()
-        # dispatch Table (ya están hechas) -- Eric
-        self.appendDispatchTables()
-        #self.appendBasePrototypes()
-        # prototypes -- Eric
-        self.appendHeapStart()
+        self.addDispatchTables()
+        self.addPrototypes()
+        self.addHeapStart()
 
     # On enter literal value, add it to str or int stack
     def addStringConst(self, text):
@@ -156,21 +172,21 @@ class dataSegment(coolListener):
         self.registered_strings[text] = 'str_const'+str(self.str_constants_count)
         self.str_constants_count += 1
 
-    def addIntConst(self, content):
+    def addIntConst(self, content:int):
         if content in self.registered_ints:
             return
+        self.registered_ints[content] = f"int_const{self.int_constants_count}"
         attribute = asm.tpl_int_atr.substitute (
                 content=content
             )
         self.int_constants_text += asm.tpl_const_obj_start.substitute(
-            name='int_const'+str(self.int_constants_count),
+            name=f"int_const{self.int_constants_count}",
             class_id=self.class_id['Int'],
             size=KNOWN_SIZES['Int'],
             dispatch="Int_dispTab",
             attributes=attribute
             )
         self.int_constants_count += 1
-        self.registered_ints[content] = 'int_const'+str(self.int_constants_count)
     
     def addBoolConstants(self):
         attribute = asm.tpl_int_atr.substitute (
@@ -201,7 +217,7 @@ class dataSegment(coolListener):
 
     def enterPrimary(self, ctx: coolParser.PrimaryContext):
         if ctx.INTEGER():
-            self.addIntConst(ctx.INTEGER().getText())
+            self.addIntConst(int(ctx.INTEGER().getText()))
             return
         if ctx.STRING():
             text = ctx.STRING().getText()
@@ -245,10 +261,25 @@ def getDispTabMethods(class_name) -> list[str]:
     entries = ''
 
     methods_stack = classesDict[class_name].getAvailableMethods(deque([]))
-    #print(f"{class_name} method stack:", methods_stack)
     while methods_stack:
         entries += asm.tpl_method_name.substitute(
             method_disp = methods_stack.pop()
         )
     
     return entries
+
+def getPrototypeSize(class_name) -> list[str]:
+    # Go up the inheritance tree until we reach a 'Known Size' class
+    # Add all traversed attributes to the known size.
+    size_words = 0 
+    c = classesDict[class_name]
+
+    while c.name not in KNOWN_SIZES:
+        print(f"{c.name} has attrs: {c.attributes.keys()}")
+        size_words += len(c.attributes)
+        c = classesDict[c.inherits]
+    
+    size_words += KNOWN_SIZES[c.name]
+
+    return size_words
+    
