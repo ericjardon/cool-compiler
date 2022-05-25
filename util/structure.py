@@ -2,7 +2,7 @@ from _collections_abc import MutableMapping
 from collections import OrderedDict
 import unittest
 from pprint import pprint
-from typing import List
+from typing import List, Tuple
 
 _allClasses = {}
 
@@ -91,12 +91,53 @@ class Klass():
             return _allClasses[self.inherits].lookupMethod(name)
 
     def getAvailableMethods(self, stack) -> list[str]:
+        """
+        Returns a stack containing the names of all methods including
+        inherited ones in "Class.method" format
+        Popping until emtpy gives the sequence of declared
+        methods in top-down order.
+        """
         for method in self.methods.keys():
                 stack.append(self.name+"."+method)
         if self.name == "Object":
             return stack
         else:
             return _allClasses[self.inherits].getAvailableMethods(stack)
+    
+    def getavailableAttributes(self, stack) -> list[str]:
+        """
+        Returns a stack containing the types of all attributes including
+        inherited ones. Popping until emtpy gives the sequence of declared
+        attributes in top-down order.
+        """
+        for attr_type in self.attributes.values():
+            stack.append(attr_type)
+        if self.name=="Object":
+            return stack
+        else:
+            return _allClasses[self.inherits].getAvailableAttributes(stack) 
+
+    def getBaseAttributesCount(self, count=None):
+        """
+        Returns a dictionary of the counts of attributes of each Base Class type,
+        including inherited ones.
+        """
+        if count is None:
+            count = {
+                'Int':0,
+                'String':0,
+                'Bool':0
+            }
+        
+        for a in self.attributes.values():
+            if a in count:
+                count[a] += 1
+        
+        if self.name == "Object":
+            return count
+
+        return _allClasses[self.inherits].getBaseAttributesCount(count)
+
 
     def conforms(self, B):
         """

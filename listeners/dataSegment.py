@@ -40,13 +40,20 @@ class dataSegment(coolListener):
         self.registered_ints = {} # number to name mapping (1 to int_const1)
         self.registered_strings = {} # string to name mapping ("Int to str_const1")
         self.class_id = {}  # name to tag mapping
+        self.DEFAULTS = {}
 
         for tag, name in enumerate(classesDict.keys()):
             self.class_id[name] = tag
         
-        # Guarantee definition of 0, 1 Ints
+        # Register 0, 1 Ints
         for integer in BUILTIN_INTS:
             self.addIntConst(integer)
+
+    def populateDefaultObjectNames(self):
+        self.DEFAULTS['Int'] = self.registered_ints[0]
+        self.DEFAULTS['String'] = self.registered_strings[0]
+        self.DEFAULTS['Bool'] = 'bool_const0'
+        return
 
     def addGlobalLabels(self):
         prototype_tags = getPrototypeTags()
@@ -88,8 +95,19 @@ class dataSegment(coolListener):
                     size=size,
                     dispatch=dispatch
                 )
-                # Add void attributes for sizes > 3
-                for _ in range(3, size):
+                # Initialize default attributes (Object size gte 4)
+                remaining = size
+                base_attr_count = (classesDict[class_name]).getBaseAttributesCount()
+                
+                # Empty Int, String and Bool
+                for base in ['Int', 'String', 'Bool']:
+                    for _ in range(base_attr_count.get(base, 0)):
+                        self.result += asm.tpl_single_default_attribute.substitute(
+                            default=self.DEFAULTS.get(base,'0')
+                        )
+                        remaining -= 1
+
+                for _ in range(3, remaining):
                     # according to type, use default value
                     # Bool: bool_const0
                     # String: null string (look in registered strs)
@@ -153,13 +171,11 @@ class dataSegment(coolListener):
         self.addBoolConstants() 
     
     def exitProgram(self, ctx: coolParser.ProgramContext):
-        # we know about all constants in the program.
-        from pprint import pprint
-        pprint(self.registered_ints)
-        pprint(self.registered_strings)
 
         self.addNullStringConst()
+        self.populateDefaultObjectNames()
 
+        # Generation
         self.addConstantsText()
         self.addClassNameTable()
         self.addObjectTable()
@@ -190,7 +206,7 @@ class dataSegment(coolListener):
     def addNullStringConst(self):
         # call once
         name = 'str_const'+str(self.str_constants_count)
-        self.str_constants_text += asm.tpl_null_string_const(
+        self.str_constants_text += asm.tpl_null_string_const.substitute(
             name=name,
             zero_int = self.registered_ints[0]
         )
