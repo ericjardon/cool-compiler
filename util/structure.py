@@ -97,20 +97,20 @@ class Klass():
         Popping until emtpy gives the sequence of declared
         methods in top-down order.
         """
-        for method in self.methods.keys():
+        for method in reversed(list(self.methods.keys())):
                 stack.append(self.name+"."+method)
         if self.name == "Object":
             return stack
         else:
             return _allClasses[self.inherits].getAvailableMethods(stack)
     
-    def getavailableAttributes(self, stack) -> list[str]:
+    def getAvailableAttributes(self, stack) -> list[str]:
         """
         Returns a stack containing the types of all attributes including
         inherited ones. Popping until emtpy gives the sequence of declared
         attributes in top-down order.
         """
-        for attr_type in self.attributes.values():
+        for attr_type in reversed(list(self.attributes.values())):
             stack.append(attr_type)
         if self.name=="Object":
             return stack

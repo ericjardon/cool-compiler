@@ -97,22 +97,23 @@ class dataSegment(coolListener):
                 )
                 # Initialize default attributes (Object size gte 4)
                 remaining = size
-                base_attr_count = (classesDict[class_name]).getBaseAttributesCount()
                 
-                # Empty Int, String and Bool
-                for base in ['Int', 'String', 'Bool']:
-                    for _ in range(base_attr_count.get(base, 0)):
-                        self.result += asm.tpl_single_default_attribute.substitute(
-                            default=self.DEFAULTS.get(base,'0')
-                        )
-                        remaining -= 1
+                attributes = classesDict[class_name].getAvailableAttributes(deque([]))
 
+                while attributes:
+                    a_type = attributes.pop()
+                    if a_type in self.DEFAULTS:  # base attribute, init accordingly
+                        self.result += asm.tpl_single_default_attribute.substitute(
+                            default=self.DEFAULTS[a_type]
+                        )
+                    else:  # Non-base attribute
+                        self.result += asm.tpl_single_default_attribute.substitute(
+                            default='0'
+                        )
+                    remaining -= 1
+
+                # Assembly-only attributes
                 for _ in range(3, remaining):
-                    # according to type, use default value
-                    # Bool: bool_const0
-                    # String: null string (look in registered strs)
-                    # Int: null int
-                    # other: void (0)
                     self.result += asm.tpl_single_default_attribute.substitute(
                         default='0'
                     )
