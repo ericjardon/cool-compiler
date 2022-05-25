@@ -216,8 +216,8 @@ ${name}_protObj:
     .word   $dispatch"""
 )
 
-tpl_single_void_attribute = """
-    .word   0"""
+tpl_single_default_attribute = Template("""
+    .word   $default""")
 
 tpl_string_prototype_string = Template("""
     .word   -1
@@ -228,6 +228,16 @@ ${name}_protObj:
     .word   $len_name
     .word   0"""
 )
+
+tpl_null_string_const = Template("""
+$name:
+	.word	4
+	.word	5
+	.word	String_dispTab
+	.word	$zero_int
+	.byte	0	
+	.align	2""")  # to init String attributes
+
 
 # HEAP START
 tpl_heap_start = """

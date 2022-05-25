@@ -40,8 +40,13 @@ class dataSegment(coolListener):
         self.registered_ints = {} # number to name mapping (1 to int_const1)
         self.registered_strings = {} # string to name mapping ("Int to str_const1")
         self.class_id = {}  # name to tag mapping
+
         for tag, name in enumerate(classesDict.keys()):
             self.class_id[name] = tag
+        
+        # Guarantee definition of 0, 1 Ints
+        for integer in BUILTIN_INTS:
+            self.addIntConst(integer)
 
     def addGlobalLabels(self):
         prototype_tags = getPrototypeTags()
@@ -61,8 +66,7 @@ class dataSegment(coolListener):
             )
 
     def addPrototypes(self):
-        from pprint import pprint
-        pprint(self.registered_ints)
+
         for class_name in classesDict:
             class_id = self.class_id[class_name]
             dispatch = f"{class_name}_dispTab"
@@ -86,7 +90,14 @@ class dataSegment(coolListener):
                 )
                 # Add void attributes for sizes > 3
                 for _ in range(3, size):
-                    self.result += asm.tpl_single_void_attribute
+                    # according to type, use default value
+                    # Bool: bool_const0
+                    # String: null string (look in registered strs)
+                    # Int: null int
+                    # other: void (0)
+                    self.result += asm.tpl_single_default_attribute.substitute(
+                        default='0'
+                    )
 
 
     def addHeapStart(self):
@@ -131,7 +142,6 @@ class dataSegment(coolListener):
         self.result += asm.tpl_object_table.substitute(objects=objects)
 
     
-    
     def enterProgram(self, ctx: coolParser.ProgramContext):
         self.result += asm.tpl_start_data
 
@@ -140,10 +150,15 @@ class dataSegment(coolListener):
         self.addClassTagIDs()
         self.MemMgrBoilerPlate()
         self.addClassNames()
-        self.addBoolConstants()
+        self.addBoolConstants() 
     
     def exitProgram(self, ctx: coolParser.ProgramContext):
         # we know about all constants in the program.
+        from pprint import pprint
+        pprint(self.registered_ints)
+        pprint(self.registered_strings)
+
+        self.addNullStringConst()
 
         self.addConstantsText()
         self.addClassNameTable()
@@ -171,6 +186,17 @@ class dataSegment(coolListener):
         )
         self.registered_strings[text] = 'str_const'+str(self.str_constants_count)
         self.str_constants_count += 1
+    
+    def addNullStringConst(self):
+        # call once
+        name = 'str_const'+str(self.str_constants_count)
+        self.str_constants_text += asm.tpl_null_string_const(
+            name=name,
+            zero_int = self.registered_ints[0]
+        )
+        self.registered_strings[0] = 'str_const'+str(self.str_constants_count)
+        self.str_constants_count += 1
+
 
     def addIntConst(self, content:int):
         if content in self.registered_ints:
@@ -223,16 +249,8 @@ class dataSegment(coolListener):
             text = ctx.STRING().getText()
             self.addStringConst(text)
             return
-            
-            
-
-    """ def enterPrimaria_string(self, ctx: coolParser.Primaria_stringContext):
-        self.constants = self.constants + 1
-        ctx.label = "const{}".format(self.constants)
-        self.result += asm.tpl_string_const_decl.substitute(
-            name = ctx.label, content = ctx.getText()
-        ) """
-# Write printMyShit function  
+        
+        
 
 def getPrototypeTags() -> str:
     substitution = ''
@@ -275,7 +293,6 @@ def getPrototypeSize(class_name) -> list[str]:
     c = classesDict[class_name]
 
     while c.name not in KNOWN_SIZES:
-        print(f"{c.name} has attrs: {c.attributes.keys()}")
         size_words += len(c.attributes)
         c = classesDict[c.inherits]
     

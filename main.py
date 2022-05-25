@@ -41,4 +41,4 @@ def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/semantic/codegen/input/fibo.cool')
+    compile('resources/semantic/codegen/input/hairyscary.cool')
