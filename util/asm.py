@@ -152,7 +152,7 @@ _MemMgr_TEST:
 
 # CLASS TAGS
 tpl_class_tag = Template("""
-_$name_tag:
+_${name}_tag:
     .word   $n"""
 )
 
@@ -163,105 +163,58 @@ $name:
     .word   $class_id
     .word   $size
     .word   $dispatch
-$attributes"""
+    $attributes"""
 )
 
 
 # ATTRIBUTES
 
-tpl_string_atr = Template(""" 
-    .word $len_name
+tpl_string_atr = Template(""".word $len_name
     .ascii $content
     .byte 0
     .align 2"""
 )
 
-tpl_int_atr = Template(""" 
-    .word $content"""
+tpl_int_atr = Template(""".word $content"""
 )
 
-tpl_bool_atr = Template(""" 
-    .word $value"""
+tpl_bool_atr = Template(""".word $value"""
 )
 
 # CLASS TABLES
 
 tpl_class_name_table = Template("""
-class_nameTab:
-$names"""
+class_nameTab:$names"""
 )
 tpl_class_name = Template("""
-    .word   str_const$n"""
+    .word   $name"""
 )
 
 tpl_object_table = Template("""
-class_objTab:
-$objects"""
+class_objTab:$objects"""
 )
 
 tpl_object_info = Template("""
-    .word   $name_protObj
-    .word   $name_init"""
+    .word   ${name}_protObj
+    .word   ${name}_init"""
 )
 
 # DISPATCH TABLES
-tpl_obj_dispatch_table = Template("""
-Object_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy"""
+
+tpl_dispatch_table = Template("""
+${class_name}_dispTab:
+$methods"""
 )
 
-tpl_io_dispatch_table = """
-IO_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy
-    .word   IO.out_string
-    .word   IO.out_int
-    .word   IO.in_string
-    .word   IO.in_int"""
-
-
-tpl_int_dispatch_table = """
-Int_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy"""
-
-
-tpl_string_dispatch_table = """
-String_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy
-    .word   String.length
-    .word   String.concat
-    .word   String.substr"""
-
-tpl_bool_dispatch_table = """
-Bool_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy"""
-
-tpl_main_dispatch_table = """
-Main_dispTab:
-    .word   Object.abort
-    .word   Object.type_name
-    .word   Object.copy
-    .word   IO.out_string
-    .word   IO.out_int
-    .word   IO.in_string
-    .word   IO.in_int
-    .word   Main.fact
-    .word   Main.main"""
+tpl_method_name = Template("""
+    .word   ${class_name}.$method_name"""
+)
 
 # PROTOTYPE OBJECTS
 
 tpl_non_init_prototype_object = Template("""
     .word   -1
-$name_protObj:
+${name}_protObj:
     .word   $class_id
     .word   $size
     .word   $dispatch"""
@@ -287,10 +240,10 @@ $name_protObj:
 )
 
 # HEAP START
-tpl_heap_start =  Template("""
+tpl_heap_start = """
     .globl  heap_start
 heap_start:
-    .word   0""")
+    .word   0"""
 
 
 # ---------------- end delivery-5

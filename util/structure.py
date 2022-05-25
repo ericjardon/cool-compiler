@@ -89,6 +89,14 @@ class Klass():
             raise KeyError(name)
         else:
             return _allClasses[self.inherits].lookupMethod(name)
+    
+    def getAvailableMethods(self, stack) -> list:
+        for method in self.methods.keys():
+                stack.append(self.name+"."+method)
+        if self.name == "Object":
+            return stack
+        else:
+            return _allClasses[self.inherits].getAvailableMethods(stack)
 
     def conforms(self, B):
         """
