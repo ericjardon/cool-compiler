@@ -90,19 +90,25 @@ class Klass():
         else:
             return _allClasses[self.inherits].lookupMethod(name)
 
-    def getAvailableMethods(self, stack) -> list[str]:
+    def getAvailableMethods(self, stack, defined_methods=None) -> list[str]:
         """
         Returns a stack containing the names of all methods including
         inherited ones in "Class.method" format
         Popping until emtpy gives the sequence of declared
         methods in top-down order.
         """
+        if not defined_methods:
+            defined_methods = set()
+
         for method in reversed(list(self.methods.keys())):
+            if method not in defined_methods:
+                defined_methods.add(method)
                 stack.append(self.name+"."+method)
+                
         if self.name == "Object":
             return stack
         else:
-            return _allClasses[self.inherits].getAvailableMethods(stack)
+            return _allClasses[self.inherits].getAvailableMethods(stack, defined_methods)
     
     def getAvailableAttributes(self, stack) -> list[str]:
         """

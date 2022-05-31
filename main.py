@@ -38,10 +38,10 @@ def compile(file, treeprinter=False):
         writer.write(dotData.result)
     writer.close()
 
-    walker.walk(frameSize(), tree)
+    # walker.walk(frameSize(), tree)
 
 def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/codegen/input/example.cl')
+    compile('resources/codegen/input/hairyscary.cool')
