@@ -1,12 +1,8 @@
-Nuevos listeners sigan en el directorio listeners.
-El asm.py (los templates) se vayan al directorio util.
-El primer hito será la generación del segmento de datos solamente (lo vimos la clase del 9 de mayo). Sugiero concentrarse en un ejemplo como: hairyscary.cool
 
+Generación de Código
 
-Del ejemplo que vimos durante la clase se deriva que se tienen que crear:
+> Tratar de hacer reverse engineering de coolc.jar
 
-- Objetos para cada constante (deben de llevar un tag consistente para la jerarquía de objetos). -> listener
-- class_nameTab con los nombres de los prototipos y constructores de cada clase -> jerarquia.
-- dispTab para cada clase -> jerarquia.
-- protObj para cada clase -> jerarquia.
-- Todo lo demás que es fijo para cualquier programa (hasta donde comienza el .text).
+> Checar el output de pequeños programas ejemplo.
+> Para compilar:
+java -jar coolc.jar example.cl
