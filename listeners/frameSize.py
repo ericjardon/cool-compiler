@@ -3,12 +3,14 @@ from antlr.coolParser import coolParser
 from util.structure import *
 from util.structure import _allClasses as classDict
 from antlr4.tree.Tree import ParseTree
+from collections import defaultdict
+from pprint import pprint
+
 
 def getCurrentMethod(ctx: ParseTree) -> ParseTree:
     parent = ctx.parentCtx
     while (parent and not hasattr(parent, 'locals_count')):
         parent = parent.parentCtx
-    print("Current method is", type(parent))
     return parent
 
 class frameSize(coolListener):
@@ -17,9 +19,18 @@ class frameSize(coolListener):
     number of local variables (let) to determine necessary space for 
     locals for every method
     '''
+    method_locals = None  
 
     def __init__(self) -> None:
         print("===FRAME SIZE LISTENER")
+        self.method_locals = {} # C.m -> locals count
+
+    def enterKlass(self, ctx:coolParser.KlassContext):
+        k = classDict[ctx.TYPE(0).getText()]
+        ctx.activeClass = k
+        # feature nodes know the class they belong to
+        for feature in ctx.feature():  
+            feature.activeClass = k  
     
     # Enter a parse tree produced by coolParser#let_expr.
     def enterLet_expr(self, ctx:coolParser.Let_exprContext):
@@ -30,10 +41,16 @@ class frameSize(coolListener):
     def exitLet_expr(self, ctx:coolParser.Let_exprContext):
         pass
 
-    # Enter a parse tree produced by coolParser#method_call.
-    def enterMethod_call(self, ctx:coolParser.Method_callContext):
+    def enterFeature_function(self, ctx:coolParser.Feature_functionContext):
+        ctx.method_name = ctx.activeClass.name + '.' + ctx.ID().getText()
         ctx.locals_count = 0
 
-    # Exit a parse tree produced by coolParser#method_call.
-    def exitMethod_call(self, ctx:coolParser.Method_callContext):
-        print("Method locals_count=", ctx.locals_count)
+    def exitFeature_function(self, ctx:coolParser.Feature_functionContext):
+        self.method_locals[ctx.method_name] = ctx.locals_count
+    
+    def exitProgram(self, ctx:coolParser.ProgramContext):
+        print("Function locals")
+        pprint(self.method_locals)
+
+    def getMethodLocalsCount(self):
+        return self.method_locals
