@@ -70,4 +70,21 @@ tpl_let_decl = Template(
 # has previously evaluated subexprs, either default or initialized
 
 tpl_local_var = Template("""
-    lw $a0  ${ith_local_offset}($fp)    # load [${local_var_name}]""")
+    lw $$a0  ${ith_local_offset}($fp)    # load [${local_var_name}]""")
+
+
+# ARITHMETIC
+
+tpl_arith_add_expr = Template("""
+${left_subexpr_code}    
+	sw	$$a0 0($$sp) 		# arith: push left subexp to the stack
+	addiu	$$sp $$sp -4 		# arith
+${right_subexpr_code}
+	jal	Object.copy         # copy of new Int to a0
+	lw	$$s1 4($$sp) 		# arith: pop left subexpr from stack into $$s1
+	addiu	$$sp $$sp 4 		# arith
+	lw	$$t2 12($$s1) 		# arith: load Int.value of left into t2
+	lw	$$t1 12($$a0) 		# arith: load Int.value of right into t1
+	add	$$t1 $$t2 $$t1 		# arith
+	sw	$$t1 12($$a0) 		# arith: store result into new Int.value""")
+
