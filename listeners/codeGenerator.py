@@ -62,30 +62,6 @@ class codeGenerator(coolListener):
              offset = ctx.getChild(0).offset
         )
         
-    
-    def exitVar(self, ctx: coolParser.VarContext):
-        self.stack.append(
-            asm.tpl_var_from_stack.substitute(
-                offset = ctx.offset,
-                name = ctx.getText()
-            )
-        )
-        # Las variables ya no viven en el .text :,(
-        # name = ctx.getText()
-
-        # self.stack.append(
-        #     asm.tpl_var.substitute(name=code)
-        # )
-    
-    def exitPrintint(self, ctx: coolParser.PrintintContext):
-        ctx.code = asm.tpl_print_int.substitute(
-            prev=self.stack.pop()
-        )
-
-    def exitPrintstr(self, ctx: coolParser.PrintstrContext):
-        ctx.code = asm.tpl_print_str.substitute(
-            prev=self.stack.pop()
-        )
 
     def exitIf_else(self, ctx: coolParser.If_elseContext):
         self.labels = self.labels = self.labels + 1
@@ -131,5 +107,3 @@ class codeGenerator(coolListener):
             )
         )        
     
-    def exitReturn(self, ctx: coolParser.ReturnContext):
-        ctx.code = self.stack.pop()

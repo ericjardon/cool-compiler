@@ -1,7 +1,8 @@
 from string import Template
 
+# PRIMARY EXPRESSIONS
 tpl_expr_self = """
-    move	$a0 $s0     # self"""  # by convention, self is always in s0
+    move	$a0 $s0     # self"""  # by convention, self is in s0
 
 tpl_primary_true = """
     la	$a0 bool_const1 	# true"""
@@ -16,12 +17,15 @@ tpl_expr_isvoid = Template("""
 	beqz	$$t1 ${label_if_void} 	# isvoid
 	la	$$a0 bool_const0 	# isvoid""")
 
+tpl_primary_int = Template("""
+	la	$$a0 ${int_const_name}		# ${int_value}
+""")
+
 
 # PROCEDURE PROTOCOL
 tpl_push_param = Template("""
-$param_evaluation_code  # places result in param_address
-    la      ${param_address}
-    sw      $$a0    ${param_address}
+${param_subexpr_code} 
+    sw      $$a0    0($$sp)
     addiu   $$sp $$sp -4""")
 
 tpl_before_call = Template(
@@ -67,7 +71,7 @@ tpl_single_let_decl_init = Template("""
 
 tpl_let_decl = Template(
 """${let_init_vars}""") 
-# has previously evaluated subexprs, either default or initialized
+# prints single let_decl in sequence, init or default
 
 tpl_local_var = Template("""
     lw $$a0  ${ith_local_offset}($fp)    # load [${local_var_name}]""")

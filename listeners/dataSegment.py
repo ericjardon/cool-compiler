@@ -25,7 +25,7 @@ KNOWN_SIZES = {
     'Int':4,
     'Bool':4,
     'String': 5,
-} # Main is a user defined class
+} # Main class size is variable
 
 
 class dataSegment(coolListener):
@@ -118,6 +118,9 @@ class dataSegment(coolListener):
                         default='0'
                     )
 
+    def addBuiltinStrings(self):
+        for string in BUILTIN_STRINGS:
+            self.addStringConst(string)
 
     def addHeapStart(self):
         self.result += asm.tpl_heap_start
@@ -127,7 +130,7 @@ class dataSegment(coolListener):
 
     def addClassNames(self):
         for name in classesDict.keys():
-            self.addStringConst(name)
+            self.addStringConst('"'+name+'"')
 
     def addConstantsText(self):
         self.result += self.str_constants_text
@@ -170,9 +173,12 @@ class dataSegment(coolListener):
         self.MemMgrBoilerPlate()
         self.addClassNames()
         self.addBoolConstants() 
+        self.addBuiltinStrings()
     
     def exitProgram(self, ctx: coolParser.ProgramContext):
-
+        # from pprint import pprint
+        # print("string constants")
+        # pprint(self.registered_strings)
         self.addNullStringConst()
         self.populateDefaultObjectNames()
 
@@ -192,7 +198,7 @@ class dataSegment(coolListener):
 
         attribute = asm.tpl_string_atr.substitute(
             len_name=self.registered_ints[byte_size],
-            content=f'\"{text}\"'
+            content=f'{text}'  # includes double-quotes
         )
         self.str_constants_text += asm.tpl_const_obj_start.substitute(
             name='str_const'+str(self.str_constants_count),
