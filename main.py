@@ -8,6 +8,7 @@ from listeners.featuresBuilder import featuresBuilder
 from listeners.typeChecker import typeChecker
 from listeners.tree import TreePrinter
 from listeners.dataSegment import dataSegment
+from listeners.frameSize import frameSize
 
 OUT_FILE = lambda x : f'out{x}.asm'
 test_counter = 0
@@ -37,8 +38,10 @@ def compile(file, treeprinter=False):
         writer.write(dotData.result)
     writer.close()
 
+    walker.walk(frameSize(), tree)
+
 def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/semantic/codegen/input/hairyscary.cool')
+    compile('resources/codegen/input/example.cl')
