@@ -1,5 +1,24 @@
 from string import Template
 
+# INIT METHODS, RIGHT AFTER .text START
+tpl_object_init = Template("""
+${class_name}_init:
+	addiu	$$sp $$sp -12 
+	sw	$$fp 12($$sp) 
+	sw	$$s0 8($$sp) 
+	sw	$$ra 4($$sp) 
+	addiu	$$fp $$sp 4 
+	move	$$s0 $$a0${inherits_init}
+	move	$$a0 $$s0 
+	lw	$$fp 12($$sp) 
+	lw	$$s0 8($$sp) 
+	lw	$$ra 4($$sp) 
+	addiu	$$sp $$sp 12 
+	jr	$$ra""")
+
+tpl_parent_init = Template("""
+	jal ${parent_name}_init""")
+
 # PRIMARY EXPRESSIONS
 tpl_expr_self = """
     move	$a0 $s0     # self"""  # by convention, self is in s0
@@ -75,6 +94,14 @@ tpl_let_decl = Template(
 
 tpl_local_var = Template("""
     lw $$a0  ${ith_local_offset}($fp)    # load [${local_var_name}]""")
+
+# NEW EXPR
+tpl_new_expr = Template("""
+	la	$$a0 ${class_name}_protObj 	# new: explicit
+	jal	Object.copy 
+	jal	${class_name}_init""")
+
+
 
 
 # ARITHMETIC

@@ -44,4 +44,4 @@ def dummy():
     raise SystemExit(1)
 
 if __name__ == '__main__':
-    compile('resources/codegen/input/hairyscary.cool')
+    compile('./resources/codegen/input/example.cl') 

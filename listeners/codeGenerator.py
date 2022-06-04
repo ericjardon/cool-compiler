@@ -1,8 +1,29 @@
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-
+from util.structure import _allClasses as classesDict, lookupClass
+import util.asm_text as asm
 class codeGenerator(coolListener):
+
+    def addClassInitMethods(self):
+        init_methods_string = ""
+
+        for class_name, klass in classesDict.items():
+
+            if class_name=="Object":
+                parent_init = None
+            else:
+                parent_init = asm.tpl_parent_init.substitute(
+                    parent_name=klass.inherits
+                )
+
+            init_methods_string += asm.tpl_object_init.substitute(
+                class_name=class_name,
+                inherits_init=parent_init if parent_init else ""
+            )
+        
+        self.result += init_methods_string
+
 
     def __init__(self):
         self.result = ''
@@ -11,6 +32,9 @@ class codeGenerator(coolListener):
     
     def enterProgram(self, ctx:coolParser.ProgramContext):
         self.result += asm.tpl_start_text
+        # Init methods
+        self.addClassInitMethods()
+        
     
     def exitProgram(self, ctx: coolParser.ProgramContext):
         for c in ctx.getChildren():
