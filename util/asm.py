@@ -1,8 +1,5 @@
 from string import Template
 
-tpl_start_text = """
-    .text                                   # INICIA SEGMENTO DE TEXTO (CODIGO)"""
-
 tpl_start_data = """\t.data                                   # INICIA SEGMENTO DE DATOS (VARIABLES)"""
 
 tpl_var_decl = Template("""

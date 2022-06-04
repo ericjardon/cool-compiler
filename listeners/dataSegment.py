@@ -6,9 +6,9 @@ from util.structure import _allClasses as classesDict, lookupClass
 import util.asm as asm
 
 CONSTANT_CLASSES = [
-    'int',
-    'bool',
-    'string'
+    'Int',
+    'Bool',
+    'String'
 ]
 
 BUILTIN_STRINGS = [
@@ -138,21 +138,23 @@ class dataSegment(coolListener):
         self.result += self.bool_constants_text
     
     def addClassTagIDs(self):
-        for name in classesDict.keys():
+        for name in CONSTANT_CLASSES:
             self.result += asm.tpl_class_tag.substitute(
                 name=name.lower(),
                 n=self.class_id[name]
             )
 
     def addClassNameTable(self):
+        from pprint import pprint
         names = ''
+
         for key, value in self.registered_strings.items():
-            
-            if key in classesDict:
+            # Key includes double-quotes
+            if key!=0 and key[1:-1] in classesDict:
                 names += asm.tpl_class_name.substitute(
                     name=value
                 )
-            
+
         self.result += asm.tpl_class_name_table.substitute(names=names)
 
     def addObjectTable(self):
@@ -277,9 +279,12 @@ class dataSegment(coolListener):
 
 def getPrototypeTags() -> str:
     substitution = ''
-    for classname in classesDict.keys():
-        if classname == 'Object' or classname == 'Bool':
-            continue
+    global_prototypes = [
+        'Main',
+        'Int',
+        'String',
+    ]
+    for classname in global_prototypes:
         substitution += (
             asm.tpl_prototype_tag.substitute(
                 name=classname
@@ -292,7 +297,7 @@ def getClassTags() -> str:
     for classname in CONSTANT_CLASSES:
         substitution += (
             asm.tpl_global_class_tag.substitute(
-                name=classname
+                name=classname.lower()
             )
         )
     return substitution

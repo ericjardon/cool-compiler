@@ -9,6 +9,7 @@ from listeners.typeChecker import typeChecker
 from listeners.tree import TreePrinter
 from listeners.dataSegment import dataSegment
 from listeners.frameSize import frameSize
+from listeners.codeGenerator import codeGenerator
 
 OUT_FILE = lambda x : f'out{x}.asm'
 test_counter = 0
@@ -31,14 +32,15 @@ def compile(file, treeprinter=False):
         walker.walk(TreePrinter(), tree)
 
     dotData = dataSegment()
-
+    dotText = codeGenerator()
     walker.walk(dotData, tree)
+    #walker.walk(frameSize(), tree) determine frame size in every procedure call
+    walker.walk(dotText, tree)
 
     with open(OUT_FILE(test_counter), "w") as writer:
         writer.write(dotData.result)
+        writer.write(dotText.result)
     writer.close()
-
-    # walker.walk(frameSize(), tree)
 
 def dummy():
     raise SystemExit(1)
