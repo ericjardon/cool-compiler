@@ -44,6 +44,7 @@ class Klass():
         self.attributes = SymbolTable()  # nombre -> tipo, strings
         self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
+        self.all_attributes = None
 
     def setInherits(self, inherits):
         self.inherits = inherits
@@ -122,6 +123,25 @@ class Klass():
             return stack
         else:
             return _allClasses[self.inherits].getAvailableAttributes(stack) 
+
+    def getAllAttributeNames(self)->list[str]:
+        """
+        Returns the list containing the names of all attributes including
+        inherited ones in order of class hierarchy.
+        Cached for efficiency.
+        """
+        if (self.all_attributes): return self.all_attributes
+        return self.recurAttrNames([])
+
+    def recurAttrNames(self, stack) -> list[str]:
+        for attr_name in reversed(list(self.attributes.keys())):
+            stack.append(attr_name)
+        if self.name=="Object":
+            res = stack[::-1]
+            self.all_attributes = res
+            return res
+        else:
+            return _allClasses[self.inherits].recurAttrNames(stack)
 
     def getBaseAttributesCount(self, count=None):
         """

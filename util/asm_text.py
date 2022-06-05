@@ -18,7 +18,7 @@ ${class_name}_init:
 	sw	$$s0 8($$sp) 
 	sw	$$ra 4($$sp) 
 	addiu	$$fp $$sp 4 
-	move	$$s0 $$a0${inherits_init}
+	move	$$s0 $$a0${inherits_init}${init_code}
 	move	$$a0 $$s0 
 	lw	$$fp 12($$sp) 
 	lw	$$s0 8($$sp) 
@@ -28,6 +28,13 @@ ${class_name}_init:
 
 tpl_parent_init = Template("""
 	jal ${parent_name}_init""")
+
+
+# FEATURES 
+
+tpl_attribute = Template("""
+${attribute_subexpr_code}
+	sw	$$a0 ${attr_offset}($$s0)""")
 
 
 # PRIMARY EXPRESSIONS
@@ -49,8 +56,7 @@ tpl_expr_isvoid = Template("""
 ${label_if_true}:""")
 
 tpl_primary_int = Template("""
-	la	$$a0 ${int_const_name}		# ${int_value}
-""")
+	la	$$a0 ${int_const_name}		# ${int_value}""")
 
 
 # PROCEDURE PROTOCOL - CALLER
@@ -75,7 +81,7 @@ tpl_return_to_caller = Template("""
 	lw	$$fp 12($$sp) 		# m: restore $$fp
 	lw	$$s0 8($$sp) 		# m: restore $$s0 (self)
 	lw	$$ra 4($$sp) 		# m: restore $$ra
-	addiu	$$sp $$sp ${locals_and_formals_bytes} 		# m: restore sp, ${formals_bytes} from formals, ${frame_bytes} from local frame
+	addiu	$$sp $$sp ${frame_and_formals_bytes} 		# m: restore sp, ${formals_bytes} from formals, ${frame_bytes} from local frame
 	jr	$$ra""")
 
 # PROCEDURE PROTOCOL - CALLEE

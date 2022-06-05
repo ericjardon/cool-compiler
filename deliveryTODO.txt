@@ -9,6 +9,6 @@ java -jar coolc.jar example.cl
 
 ============ 
 
-- 
-- 
+- Verify methods basic printing (only primary in body)
+- Check where params come from
 
