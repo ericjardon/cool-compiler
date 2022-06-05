@@ -49,8 +49,9 @@ class frameSize(coolListener):
         self.method_locals[ctx.method_name] = ctx.locals_count
     
     def exitProgram(self, ctx:coolParser.ProgramContext):
-        print("Function locals")
-        pprint(self.method_locals)
+        # print("Function locals")
+        # pprint(self.method_locals)
+        pass
 
-    def getMethodLocalsCount(self):
+    def getMethodLocalsCount(self) -> dict[str,int]:
         return self.method_locals

@@ -10,6 +10,7 @@ from listeners.tree import TreePrinter
 from listeners.dataSegment import dataSegment
 from listeners.frameSize import frameSize
 from listeners.codeGenerator import codeGenerator
+from pprint import pprint
 
 OUT_FILE = lambda x : f'out{x}.asm'
 test_counter = 0
@@ -32,9 +33,23 @@ def compile(file, treeprinter=False):
         walker.walk(TreePrinter(), tree)
 
     dotData = dataSegment()
-    dotText = codeGenerator()
     walker.walk(dotData, tree)
-    #walker.walk(frameSize(), tree) determine frame size in every procedure call
+
+    frameSizeListener = frameSize()
+    walker.walk(frameSizeListener, tree) 
+
+    print("--registered ints--")
+    pprint(dotData.registered_ints)
+    print("--registered strings--")
+    pprint(dotData.registered_strings)
+    print("--method locals--")
+    pprint(frameSizeListener.method_locals)
+    
+    dotText = codeGenerator(
+        registered_ints=dotData.registered_ints,
+        registered_strings=dotData.registered_strings,
+        method_locals=frameSizeListener.method_locals
+    )
     walker.walk(dotText, tree)
 
     with open(OUT_FILE(test_counter), "w") as writer:

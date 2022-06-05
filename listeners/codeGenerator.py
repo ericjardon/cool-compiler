@@ -3,11 +3,40 @@ from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 from util.structure import _allClasses as classesDict, lookupClass
 import util.asm_text as asm
+from util.structure import *
+from antlr4.tree.Tree import ParseTree
+from typing import Tuple
+
+def getActiveClass(ctx: ParseTree) -> Klass:
+    p = ctx.parentCtx
+    while (p and not hasattr(p, 'activeClass')):
+        p = p.parentCtx
+    
+    return p.activeClass
+
+def getActiveMethod(ctx: ParseTree) -> str:
+    p = ctx.parentCtx
+    while (p and not hasattr(p, 'activeMethod')):
+        p = p.parentCtx
+    
+    return p.activeMethod
+
+
 class codeGenerator(coolListener):
-    def __init__(self, registered_ints: dict[int,int], registered_strings:dict[str,int]) -> None:
+    def __init__(self, 
+    registered_ints: dict[int,int], 
+    registered_strings:dict[str,int],
+    method_locals:dict[str,int]) -> None:
         super().__init__()
         self.registered_ints=registered_ints
         self.registered_strings=registered_strings
+        self.method_locals=method_locals
+
+    def enterKlass(self, ctx: coolParser.KlassContext):
+        k = classesDict[ctx.TYPE(0).getText()]
+        ctx.activeClass = k
+        for feature in ctx.feature():  # children nodes should know the class to add to
+            feature.activeClass = k 
 
     def addClassInitMethods(self):
         '''
@@ -61,6 +90,25 @@ class codeGenerator(coolListener):
         elif ctx.ID():  # is a variable name, assign type from scope
             # Is in stack?'
             raise NotImplementedError()
+
+    def enterFeature_function(self, ctx:coolParser.Feature_functionContext):
+        ctx.method_name = ctx.activeClass.name + '.' + ctx.ID().getText()
+
+        num_locals = self.method_locals[ctx.method_name]
+        frame_size_bytes = 12 + num_locals * 4  # 12 for fp, s0 and ra
+
+        ctx.code = asm.tpl_on_enter_callee.substitute(
+            class_method_name=ctx.method_name,
+            frame_size_bytes=str(frame_size_bytes),
+            frame_size_bytes_minus_4=str(frame_size_bytes - 4),
+            frame_size_bytes_minus_8=str(frame_size_bytes - 8),
+        )
+        ## CONTINUE: TRY PRINTING METHOD'S DECLARATIONS
+
+    def exitFeature_function(self, ctx:coolParser.Feature_functionContext):
+        # append to code the rest of code
+        body = ctx.expr()
+        ctx.code += body.code
 
     def exitFeature_function(self, ctx:coolParser.Feature_functionContext):
         # Generate the code for this method.

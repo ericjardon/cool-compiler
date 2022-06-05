@@ -53,7 +53,7 @@ tpl_primary_int = Template("""
 """)
 
 
-# PROCEDURE PROTOCOL
+# PROCEDURE PROTOCOL - CALLER
 tpl_push_param = Template("""
 ${param_subexpr_code} 
     sw      $$a0    0($$sp)
@@ -69,7 +69,7 @@ ${pushing_params_code}
 ${dispatch_label_name}:
     lw  $$t1 8($$a0)  # dispatch table
     lw  $$t1 ${method_offset}($t1)  # dict[method] -> offset bytes
-    jalr    $$t1""")
+    jalr    $$t1""")  # return to caller follows
 
 tpl_return_to_caller = Template("""
 	lw	$$fp 12($$sp) 		# m: restore $$fp
@@ -78,14 +78,15 @@ tpl_return_to_caller = Template("""
 	addiu	$$sp $$sp ${locals_and_formals_bytes} 		# m: restore sp, ${formals_bytes} from formals, ${frame_bytes} from local frame
 	jr	$$ra""")
 
-
+# PROCEDURE PROTOCOL - CALLEE
 tpl_on_enter_callee = Template("""
-    addiu	$$sp $$sp -${frame_size_bytes} 		# m: frame size is 12 + size of locals
-	sw	$$fp ${frame_size_bytes}($$sp) 		# m: save $$fp
-	sw	$$s0 ${frame_size_bytes_minus_4}($$sp) 		# m: save $$s0 (self)
-	sw	$$ra ${frame_size_bytes_minus_8}($$sp) 		# m: save $$ra
-	addiu	$$fp $$sp 4 		# m: $$fp points to locals, move back
-	move	$$s0 $$a0 		# m: self to $$s0""") 
+${class_method_name}:
+    addiu	$$sp $$sp -${frame_size_bytes} 			# method: frame size = 12 + size(locals)
+	sw	$$fp ${frame_size_bytes}($$sp) 				# method: save $$fp
+	sw	$$s0 ${frame_size_bytes_minus_4}($$sp) 		# method: save $$s0 (self)
+	sw	$$ra ${frame_size_bytes_minus_8}($$sp) 		# method: save $$ra
+	addiu	$$fp $$sp 4 		# method: $$fp points to locals, move back
+	move	$$s0 $$a0 		# method: self to $$s0""")  # method body follows
 
 
 # LET BLOCK
