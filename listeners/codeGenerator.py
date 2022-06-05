@@ -1,3 +1,4 @@
+from enum import Enum
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
@@ -10,6 +11,11 @@ from typing import Tuple
 # User a SymbolTableWithScopes to map a local variable name
 # to its offset
 
+class NS(Enum):
+    LOCALS = 1
+    FORMALS = 2
+    ATTRIBUTES = 3
+
 
 def getActiveClass(ctx: ParseTree) -> Klass:
     p = ctx.parentCtx
@@ -17,7 +23,6 @@ def getActiveClass(ctx: ParseTree) -> Klass:
         p = p.parentCtx
 
     return p.activeClass
-
 
 def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
     p = ctx.parentCtx
@@ -28,6 +33,9 @@ def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
 def getAttrOffset(name:str, attr_list:list[str]) -> int:
     return attr_list.index(name)
 
+def search(varname:str, methodCtx:ParseTree, klass:Klass) -> NS:
+    pass
+
 class codeGenerator(coolListener):
     def __init__(self,
                  registered_ints: dict[int, int],
@@ -36,7 +44,8 @@ class codeGenerator(coolListener):
         
         self.registered_ints = registered_ints
         self.registered_strings = registered_strings
-        self.method_locals = method_locals
+        self.method_locals = method_locals  # name -> number of local vars
+        self.method_locals_index = {}           # method_name -> current index by method name          
         self.result = ''
         self.stack = []  # maybe not needed
         self.labels = 0
@@ -105,11 +114,18 @@ class codeGenerator(coolListener):
             ctx.code = asm.tpl_primary_false
 
         elif ctx.ID():
-            # If Attribute, fetch from offset(self)
-            # If local, fetch from
-            print("No code for", ctx.ID().getText())
+            # Search for name: 
+            # 1. locals
+            # 2. params
+            # 3. attributes
+            var_name = ctx.ID().getText()
+            klass = getActiveClass(ctx)
+            method = getCurrentMethodContext(ctx)
+            print(f"Var {var_name} in {method.method_name}")
+
+            search(var_name, method, klass)  # checks if name is in locals, then params, then attributes
+            #print("No code for", ctx.ID().getText())
             ctx.code = 'MISSING'
-            #raise NotImplementedError("ID eval")
     
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
@@ -134,7 +150,7 @@ class codeGenerator(coolListener):
         # For every method keep an index to keep track of offset
         # Use a symboltablewith scopes to map name->offset
         ctx.locals_index = 0
-        ctx.objectEnv = SymbolTableWithScopes(ctx.activeClass)  # for names
+        ctx.local_var_offset = {}  # maps locals name -> offset (bytes)
 
         ctx.code = asm.tpl_on_enter_callee.substitute(
             class_method_name=ctx.method_name,
@@ -142,7 +158,6 @@ class codeGenerator(coolListener):
             frame_size_bytes_minus_4=str(ctx.frame_size_bytes - 4),
             frame_size_bytes_minus_8=str(ctx.frame_size_bytes - 8),
         )
-        # CONTINUE: TRY PRINTING METHOD'S DECLARATIONS
 
 
     def exitFeature_function(self, ctx: coolParser.Feature_functionContext):
