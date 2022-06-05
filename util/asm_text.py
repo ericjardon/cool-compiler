@@ -78,10 +78,10 @@ ${dispatch_label_name}:
     jalr    $$t1""")  # return to caller follows
 
 tpl_return_to_caller = Template("""
-	lw	$$fp 12($$sp) 		# m: restore $$fp
-	lw	$$s0 8($$sp) 		# m: restore $$s0 (self)
-	lw	$$ra 4($$sp) 		# m: restore $$ra
-	addiu	$$sp $$sp ${frame_and_formals_bytes} 		# m: restore sp, ${formals_bytes} from formals, ${frame_bytes} from local frame
+	lw	$$fp ${frame_size_bytes}($$sp) 		# m: restore $$fp
+	lw	$$s0 ${frame_size_bytes_minus_4}($$sp) 		# m: restore $$s0 (self)
+	lw	$$ra ${frame_size_bytes_minus_8}($$sp) 		# m: restore $$ra
+	addiu	$$sp $$sp ${frame_and_formals_bytes} 		# m: restore sp, ${formals_bytes} from formals, ${frame_size_bytes} from local frame
 	jr	$$ra""")
 
 # PROCEDURE PROTOCOL - CALLEE

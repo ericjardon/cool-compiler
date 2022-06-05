@@ -107,7 +107,9 @@ class codeGenerator(coolListener):
         elif ctx.ID():
             # If Attribute, fetch from offset(self)
             # If local, fetch from
-            raise NotImplementedError("ID eval")
+            print("No code for", ctx.ID().getText())
+            ctx.code = 'MISSING'
+            #raise NotImplementedError("ID eval")
     
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
@@ -118,7 +120,7 @@ class codeGenerator(coolListener):
 
 
     def exitBlock(self, ctx:coolParser.BlockContext):
-        inner_code = [expr.code for expr in ctx.expr()]
+        inner_code = [expr.code for expr in ctx.expr() if hasattr(expr, 'code')]
         ctx.code = ''.join(inner_code)
 
 
@@ -155,8 +157,10 @@ class codeGenerator(coolListener):
 
         # Return to caller 
         ctx.code += asm.tpl_return_to_caller.substitute(
+            frame_size_bytes=str(ctx.frame_size_bytes),
+            frame_size_bytes_minus_4=str(ctx.frame_size_bytes - 4),
+            frame_size_bytes_minus_8=str(ctx.frame_size_bytes - 8),
             formals_bytes=formals_bytes,
-            frame_bytes=str(ctx.frame_size_bytes),
             frame_and_formals_bytes=str(ctx.frame_size_bytes + formals_bytes)
         )
 
@@ -187,18 +191,42 @@ class codeGenerator(coolListener):
             # If method, add to methods code.
             if hasattr(feature, 'params'):
                 ctx.code += feature.code
-            # If attribute, add to init code.
-            else:
+            # If attribute, add to init code if present.
+            elif hasattr(feature, 'code'):
                 ctx.init_code += feature.code
         
         # For appending init code later
         self.program_classes[ctx.TYPE(0).getText()] = ctx
 
-
+    def exitLet_expr(self, ctx:coolParser.Let_exprContext):
+        ctx.code = 'MISSING'
 
     def exitProgram(self, ctx:coolParser.ProgramContext):
         # Init methods
         self.addClassInitMethods()  # for every class add .init_code
         self.addClassMethods()      # for every class add .code
 
-    
+    def exitAssignment(self, ctx:coolParser.AssignmentContext):
+        ctx.code = 'MISSING'
+    def exitNot(self, ctx:coolParser.NotContext):
+        ctx.code = 'MISSING'
+    def exitEquals(self, ctx:coolParser.EqualsContext):
+        ctx.code = 'MISSING'
+    def exitLess_than(self, ctx:coolParser.Less_thanContext):
+        ctx.code = 'MISSING'
+    def exitLess_or_equal(self, ctx:coolParser.Less_or_equalContext):
+        ctx.code = 'MISSING'
+    def exitCase_stat(self, ctx:coolParser.Case_statContext):
+        ctx.code = 'MISSING'
+    def exitSubtraction(self, ctx:coolParser.SubtractionContext):
+        ctx.code = 'MISSING'
+    def exitMultiplication(self, ctx:coolParser.MultiplicationContext):
+        ctx.code = 'MISSING'
+    def exitDivision(self, ctx:coolParser.DivisionContext):
+        ctx.code = 'MISSING'
+    def exitStatic_dispatch(self, ctx:coolParser.Static_dispatchContext):
+        ctx.code = 'MISSING'
+    def exitWhile(self, ctx:coolParser.WhileContext):
+        ctx.code = 'MISSING'
+    def exitMethod_call(self, ctx:coolParser.Method_callContext):
+        ctx.code = 'MISSING'
