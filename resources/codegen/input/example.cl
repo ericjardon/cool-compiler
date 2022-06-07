@@ -2,14 +2,21 @@
 class Example inherits Main {
   y:Int;
   
-  do(num:Int) : Object {{
+  do(num:Int, num2:Int) : Object {{
     y<-15;
-    num;
-    num <- 98;
     let extra:Bool, exxtra:Bool in
       {extra;
       exxtra;
       num;};
+  }};
+
+  dont():Object {
+    0
+  };
+
+  mymain():Object {{
+    do(177, 189);
+    dont();
   }};
 };
 
@@ -20,6 +27,6 @@ class Main inherits IO
   main() : Object {{
     -- ex <- NEW Example; 
     let local:Int<-0 in
-      ex.do(local);
+      ex.main();
   }};
 };

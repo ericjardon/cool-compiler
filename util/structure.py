@@ -45,6 +45,7 @@ class Klass():
         self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
         self.all_attributes = None
+        self.all_methods = None
 
     def setInherits(self, inherits):
         self.inherits = inherits

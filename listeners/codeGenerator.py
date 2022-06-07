@@ -1,4 +1,6 @@
+from copyreg import dispatch_table
 from enum import Enum
+from fileinput import filename
 from re import I
 
 from numpy import var
@@ -36,6 +38,9 @@ def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
         p = p.parentCtx
     return p
 
+def getMethodOffset(name:str, method_list:list[str])->int:
+    # Offset from dispatch table
+    return method_list.index(name) * 4
 
 def getAttrOffset(name: str, attr_list: list[str]) -> int:
     # Attributes start at 12th
@@ -49,6 +54,7 @@ def getLocalVarOffset(name:str, num_locals:int,  methodCtx: ParseTree) -> int:
     # Locals offsets are in reverse and start from fp 0
     i = methodCtx.locals[name]
     return (num_locals - i - 1) * 4
+
 
 def search(varname: str, methodCtx: ParseTree, klass: Klass) -> NS:
     # First look into locals
@@ -216,7 +222,7 @@ class codeGenerator(coolListener):
 
     def exitBlock(self, ctx: coolParser.BlockContext):
         inner_code = [expr.code for expr in ctx.expr()
-                      if hasattr(expr, 'code')]
+                     ]
         ctx.code = ''.join(inner_code)
 
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
@@ -411,17 +417,45 @@ class codeGenerator(coolListener):
     def exitStatic_dispatch(self, ctx: coolParser.Static_dispatchContext):
         ctx.code = '\nMISSING'
     
-    def exitDispatch(self, ctx:coolParser.DispatchContext):
-        ctx.code = '\nMISSING'
-
     def exitIf_else(self, ctx:coolParser.If_elseContext):
         ctx.code = '\nMISSING'
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         ctx.code = '\nMISSING'
 
+    def generatePushingParamsCode(self, ctx: ParseTree) -> str:
+        params_code=''
+        for p in ctx.params:
+            subexpr_code = p.code
+            params_code += asm.tpl_push_param.substitute(
+                param_subexpr_code=subexpr_code
+            )
+        return params_code
+
+    def exitDispatch(self, ctx: coolParser.DispatchContext):
+        pass
+
     def exitMethod_call(self, ctx: coolParser.Method_callContext):
-        ctx.code = '\nMISSING'
+        # Generate code for params to push
+        params_code = self.generatePushingParamsCode(ctx)
+        klass = getActiveClass(ctx)
+        method_key = ctx.ID().getText()
+        dispatch_label_name = 'disp_label' + str(self.labels)
+        self.labels += 1
+        #methods_list = klass.getAvailableMethods()
+        method_offset = getMethodOffset(method_key, klass)
+
+        filename_str = f'str_const_{self.registered_strings["--filename--"]}'
+
+        ctx.code = asm.tpl_before_call.substitute(
+            pushing_params_code=params_code,
+            load_caller=asm.tpl_caller_self,
+            dispatch_label_name=dispatch_label_name,
+            filename_str=filename_str,
+            call_line_number='UNKNOWN LINE NO',
+            method_offset=str(method_offset)
+        )
+
 
     def exitNew(self, ctx:coolParser.NewContext):
         ctx.code = '\nMISSING'
