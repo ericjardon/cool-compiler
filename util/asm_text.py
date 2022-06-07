@@ -30,22 +30,29 @@ tpl_parent_init = Template("""
 	jal ${parent_name}_init""")
 
 
-# FEATURES 
-
-tpl_set_attribute = Template("""
-${attribute_subexpr_code}
-	sw	$$a0 ${attr_offset}($$s0)""")
-
+# VAR ID GETTERS AND SETTERS
 tpl_get_attribute = Template("""
-	lw	$$a0 ${attr_offset}($$s0)	# load attribute""")
+	lw	$$a0 ${attr_offset}($$s0)	# load attribute [${identifier}]""")
+
+tpl_set_attribute = Template(
+"""${subexpr_code}
+	sw	$$a0 ${attr_offset}($$s0)		# assignment of attribute [${identifier}]""")
 
 # Params begin at locals size + 12 bytes from fp: locals->frame->params
 tpl_get_param = Template("""
-	lw	$$a0 ${param_offset}($$fp) 	# load ${identifier} Formal parameter""")
+	lw	$$a0 ${param_offset}($$fp)		# load [${identifier}] param""")
+
+tpl_set_param = Template(
+"""${subexpr_code}
+	sw	$$a0 ${param_offset}($$fp)		# assignment of [${identifier}] param""")
 
 # Locals begin at fp
 tpl_get_local_var = Template("""
-	lw	$$a0 ${local_var_offset}($$fp) 		# load ${identifier} local var""")
+	lw	$$a0 ${local_var_offset}($$fp) 		# load [${identifier}] local var""")
+
+tpl_set_local_var = Template(
+"""${subexpr_code}
+	sw	$$a0 ${local_var_offset}($$fp) 		# assignment of [${identifier}] local var""")
 
 # PRIMARY EXPRESSIONS
 tpl_expr_self = """
@@ -97,17 +104,17 @@ tpl_return_to_caller = Template("""
 # PROCEDURE PROTOCOL - CALLEE
 tpl_on_enter_callee = Template("""
 ${class_method_name}:
-    addiu	$$sp $$sp -${frame_size_bytes} 			# method: frame size = 12 + size(locals)
+    addiu	$$sp $$sp -${frame_size_bytes} 			# method: frame size = 12 + ${num_locals} locals
 	sw	$$fp ${frame_size_bytes}($$sp) 				# method: save $$fp
 	sw	$$s0 ${frame_size_bytes_minus_4}($$sp) 		# method: save $$s0 (self)
 	sw	$$ra ${frame_size_bytes_minus_8}($$sp) 		# method: save $$ra
-	addiu	$$fp $$sp 4 		# method: $$fp points to locals, move back
+	addiu	$$fp $$sp 4 		# method: $$fp now points to locals
 	move	$$s0 $$a0 		# method: self to $$s0""")  # method body follows
 
 
 # LET BLOCK
 tpl_single_let_decl_default = Template("""
-    la  $$a0 ${default_obj}
+    la  $$a0 ${default_const}
     sw  $$a0 ${ith_local_offset}($$fp) 		# letd: Store default value of ${identifier}
 """)  # ith local offset is calculated: (N-i-1) where N total num of vars
 

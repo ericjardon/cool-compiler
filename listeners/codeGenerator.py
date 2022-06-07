@@ -21,6 +21,7 @@ class NS(Enum):
     ATTRIBUTES = 3
 
 
+
 def getActiveClass(ctx: ParseTree) -> Klass:
     p = ctx.parentCtx
     while (p and not hasattr(p, 'activeClass')):
@@ -91,18 +92,21 @@ class codeGenerator(coolListener):
         self.registered_ints = registered_ints
         self.registered_strings = registered_strings
         self.method_locals = method_locals  # name -> number of local vars
-        # method_name -> current index by method name
-        self.method_locals_index = {}
         self.result = ''
+        self.program_classes = {}  # klass name -> klass ParseTree
+        self.DEFAULT_CONST = {
+        'Int':      self.registered_ints[0],
+        'String':   self.registered_strings[0],
+        'Bool':     'bool_const0',
+        }
+
+        # Proffesor-defined fields
         self.stack = []  # maybe not needed
         self.labels = 0
-        self.program_classes = {}  # klass name -> klass ParseTree
 
     def enterKlass(self, ctx: coolParser.KlassContext):
         k = classesDict[ctx.TYPE(0).getText()]
-
         ctx.activeClass = k
-
         for feature in ctx.feature():
             feature.activeClass = k
 
@@ -182,7 +186,8 @@ class codeGenerator(coolListener):
                     attrs = klass.getAllAttributeNames()
                     attr_offset = getAttrOffset(var_name, attrs) 
                     ctx.code = asm.tpl_get_attribute.substitute(
-                        attr_offset=attr_offset
+                        attr_offset=attr_offset,
+                        identifier=var_name
                     )
                 elif ns==NS.FORMALS:
                     # Get from frame + locals + offset
@@ -233,6 +238,7 @@ class codeGenerator(coolListener):
 
         ctx.code = asm.tpl_on_enter_callee.substitute(
             class_method_name=ctx.method_name,
+            num_locals=num_locals,
             frame_size_bytes=str(ctx.frame_size_bytes),
             frame_size_bytes_minus_4=str(ctx.frame_size_bytes - 4),
             frame_size_bytes_minus_8=str(ctx.frame_size_bytes - 8),
@@ -258,18 +264,20 @@ class codeGenerator(coolListener):
 
     def exitFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
 
-        subexpr = ctx.expr()  # initialization subexpression
+        subexpr = ctx.expr() 
+        # Generate code for subexpression if exists
         if subexpr:
-            # Get offset of attribute
             k = getActiveClass(ctx)
             attrs = k.getAllAttributeNames()
             name = ctx.ID().getText()
+            # get offset of attribute
             attr_offset = getAttrOffset(name, attrs)
 
             try:
                 ctx.code = asm.tpl_set_attribute.substitute(
-                    attribute_subexpr_code=subexpr.code,
-                    attr_offset=attr_offset
+                    subexpr_code=subexpr.code,
+                    attr_offset=attr_offset,
+                    identifier=name
                 )
             except AttributeError:
                 print(
@@ -309,22 +317,29 @@ class codeGenerator(coolListener):
 
         for var in ctx.let_decl():
             name = var.ID().getText()
-            offset = method.locals[name] * 4
+            type = var.TYPE().getText()
+            #offset = method.locals[name] * 4  # 
+            num_locals = self.method_locals[method.method_name]
+            local_var_offset = getLocalVarOffset(name, num_locals, method)
+
             if var.expr():
                 let_code += asm.tpl_single_let_decl_init.substitute(
                     let_var_subexpr=var.expr().code,
-                    ith_local_offset=str(offset),
+                    ith_local_offset=local_var_offset,
                     identifier=name
                 )
             else:
-                # Load default value in Data Segment
+                # Load default value registered from Data Segment
+                default_const = self.DEFAULT_CONST.get(type)
+                
                 let_code += asm.tpl_single_let_decl_default.substitute(
-                    default_obj="MISSING: get default for" + var.TYPE().getText(),
-                    ith_local_offset=str(offset),
+                    default_const=default_const,
+                    ith_local_offset=local_var_offset,
                     identifier=name
                 )
 
         method.locals.closeScope()
+        let_code += ctx.expr().code
         ctx.code = let_code
 
     def exitProgram(self, ctx: coolParser.ProgramContext):
@@ -333,7 +348,41 @@ class codeGenerator(coolListener):
         self.addClassMethods()      # for every class add .code
 
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
-        ctx.code = '\nMISSING'
+        # Same as evaluation. use search to determine namespace
+        # and use the tpl_set_ template accordingly
+        subexpr_code = ctx.expr().code
+        var_name = ctx.ID().getText()
+        method = getCurrentMethodContext(ctx)
+        klass = getActiveClass(ctx)
+        
+        # checks if name is in locals, then params, then attributes
+        ns = search(var_name, method, klass)
+
+        if ns==NS.ATTRIBUTES:
+            attrs = klass.getAllAttributeNames()
+            attr_offset = getAttrOffset(var_name, attrs) 
+            ctx.code = asm.tpl_set_attribute.substitute(
+                subexpr_code=subexpr_code,
+                attr_offset=attr_offset,
+                identifier=var_name
+            )
+
+        elif ns==NS.FORMALS:
+            param_offset =  getParamOffset(var_name, method)
+            ctx.code= asm.tpl_set_param.substitute(
+                subexpr_code=subexpr_code,
+                param_offset=param_offset,
+                identifier=var_name
+            )
+
+        else:  # NS.LOCALS
+            num_locals = self.method_locals[method.method_name]
+            local_var_offset = getLocalVarOffset(var_name, num_locals, method)
+            ctx.code = asm.tpl_set_local_var.substitute(
+                subexpr_code=subexpr_code,
+                local_var_offset=local_var_offset,
+                identifier=var_name
+            )
 
     def exitNot(self, ctx: coolParser.NotContext):
         ctx.code = '\nMISSING'

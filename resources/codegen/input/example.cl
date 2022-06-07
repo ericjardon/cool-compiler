@@ -4,7 +4,8 @@ class Example inherits Main {
   
   do(num:Int) : Object {{
     y<-15;
-    98;
+    num;
+    num <- 98;
     let extra:Bool, exxtra:Bool in
       {extra;
       exxtra;
