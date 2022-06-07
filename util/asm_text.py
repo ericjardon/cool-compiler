@@ -37,8 +37,15 @@ ${attribute_subexpr_code}
 	sw	$$a0 ${attr_offset}($$s0)""")
 
 tpl_get_attribute = Template("""
-	lw	$$a0 ${attr_offset}($$s0)""")
+	lw	$$a0 ${attr_offset}($$s0)	# load attribute""")
 
+# Params begin at locals size + 12 bytes from fp: locals->frame->params
+tpl_get_param = Template("""
+	lw	$$a0 ${param_offset}($$fp) 	# load ${identifier} Formal parameter""")
+
+# Locals begin at fp
+tpl_get_local_var = Template("""
+	lw	$$a0 ${local_var_offset}($$fp) 		# load ${identifier} local var""")
 
 # PRIMARY EXPRESSIONS
 tpl_expr_self = """

@@ -1,21 +1,24 @@
+-- A let-bound variable can shadow a same-named let-bound variable.
 class Example inherits Main {
-  y:Int <- 145;
+  y:Int;
   
-  do() : Object {{
-    -- y<-15;
-    1;
-    let x:Bool, y:Int, z:String in
-      2;
+  do(num:Int) : Object {{
+    y<-15;
+    98;
+    let extra:Bool, exxtra:Bool in
+      {extra;
+      exxtra;
+      num;};
   }};
 };
 
 class Main inherits IO
 {
-  x: Example;
-  main():Object {{
-      13;
-      x;
-      99;
-      x.do();
-    }};
+  x: Int <- 13;
+  ex: Example;
+  main() : Object {{
+    -- ex <- NEW Example; 
+    let local:Int<-0 in
+      ex.do(local);
+  }};
 };

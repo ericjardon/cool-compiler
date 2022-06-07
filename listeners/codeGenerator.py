@@ -1,4 +1,5 @@
 from enum import Enum
+from re import I
 
 from numpy import var
 from util import asm
@@ -39,6 +40,14 @@ def getAttrOffset(name: str, attr_list: list[str]) -> int:
     # Attributes start at 12th
     return 12 + attr_list.index(name)*4
 
+def getParamOffset(name: str, methodCtx: ParseTree) -> int:
+    methodParams = methodCtx.params_list
+    return methodCtx.frame_size_bytes + methodParams.index(name)*4
+
+def getLocalVarOffset(name:str, num_locals:int,  methodCtx: ParseTree) -> int:
+    # Locals offsets are in reverse and start from fp 0
+    i = methodCtx.locals[name]
+    return (num_locals - i - 1) * 4
 
 def search(varname: str, methodCtx: ParseTree, klass: Klass) -> NS:
     # First look into locals
@@ -176,9 +185,21 @@ class codeGenerator(coolListener):
                         attr_offset=attr_offset
                     )
                 elif ns==NS.FORMALS:
-                    ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
+                    # Get from frame + locals + offset
+                    param_offset =  getParamOffset(var_name, method)
+                    ctx.code= asm.tpl_get_param.substitute(
+                        param_offset=param_offset,
+                        identifier=var_name
+                    )
                 else:  # ns==NS.LOCALS
-                    ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
+                    # Get from fp backwards
+                    num_locals = self.method_locals[method.method_name]
+                    local_var_offset = getLocalVarOffset(var_name,num_locals,method)
+                    
+                    ctx.code = asm.tpl_get_local_var.substitute(
+                        local_var_offset=local_var_offset,
+                        identifier=var_name
+                    )
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
@@ -195,6 +216,9 @@ class codeGenerator(coolListener):
 
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         ctx.method_name = ctx.activeClass.name + '.' + ctx.ID().getText()
+        
+        methodObj = ctx.activeClass.lookupMethod(ctx.ID().getText())
+        ctx.params_list = list(methodObj.params.keys())
 
         num_locals = self.method_locals[ctx.method_name]
         ctx.frame_size_bytes = 12 + num_locals * 4  # 12 for fp, s0 and ra
