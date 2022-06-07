@@ -36,7 +36,8 @@ def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
 
 
 def getAttrOffset(name: str, attr_list: list[str]) -> int:
-    return attr_list.index(name)
+    # Attributes start at 12th
+    return 12 + attr_list.index(name)*4
 
 
 def search(varname: str, methodCtx: ParseTree, klass: Klass) -> NS:
@@ -152,7 +153,6 @@ class codeGenerator(coolListener):
 
         elif ctx.ID():
             # Search for name:
-
             var_name = ctx.ID().getText()
 
             if var_name == "self":
@@ -169,12 +169,16 @@ class codeGenerator(coolListener):
                 ns = search(var_name, method, klass)
 
                 if ns==NS.ATTRIBUTES:
-                    pass
+                    # Get from self + offset
+                    attrs = klass.getAllAttributeNames()
+                    attr_offset = getAttrOffset(var_name, attrs) 
+                    ctx.code = asm.tpl_get_attribute.substitute(
+                        attr_offset=attr_offset
+                    )
                 elif ns==NS.FORMALS:
-                    pass
+                    ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
                 else:  # ns==NS.LOCALS
-                    pass
-                ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
+                    ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
@@ -239,7 +243,7 @@ class codeGenerator(coolListener):
             attr_offset = getAttrOffset(name, attrs)
 
             try:
-                ctx.code = asm.tpl_attribute.substitute(
+                ctx.code = asm.tpl_set_attribute.substitute(
                     attribute_subexpr_code=subexpr.code,
                     attr_offset=attr_offset
                 )

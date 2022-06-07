@@ -14,6 +14,8 @@ class Main inherits IO
   x: Example;
   main():Object {{
       13;
+      x;
+      99;
       x.do();
     }};
 };

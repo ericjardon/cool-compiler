@@ -32,9 +32,12 @@ tpl_parent_init = Template("""
 
 # FEATURES 
 
-tpl_attribute = Template("""
+tpl_set_attribute = Template("""
 ${attribute_subexpr_code}
 	sw	$$a0 ${attr_offset}($$s0)""")
+
+tpl_get_attribute = Template("""
+	lw	$$a0 ${attr_offset}($$s0)""")
 
 
 # PRIMARY EXPRESSIONS
