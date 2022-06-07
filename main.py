@@ -45,16 +45,16 @@ def compile(file, treeprinter=False):
     print("--method locals--")
     pprint(frameSizeListener.method_locals)
     
-    dotText = codeGenerator(
-        registered_ints=dotData.registered_ints,
-        registered_strings=dotData.registered_strings,
-        method_locals=frameSizeListener.method_locals
-    )
-    walker.walk(dotText, tree)
+    # dotText = codeGenerator(
+    #     registered_ints=dotData.registered_ints,
+    #     registered_strings=dotData.registered_strings,
+    #     method_locals=frameSizeListener.method_locals
+    # )
+    # walker.walk(dotText, tree)
 
     with open(OUT_FILE(test_counter), "w") as writer:
         writer.write(dotData.result)
-        writer.write(dotText.result)
+        #writer.write(dotText.result)
     writer.close()
 
 def dummy():

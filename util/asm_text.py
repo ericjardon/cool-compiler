@@ -101,8 +101,8 @@ tpl_single_let_decl_default = Template("""
     sw  $$a0 ${ith_local_offset}($fp) 		# letd: Store default value of ${identifier}
 """)  # ith local offset is calculated: (N-i-1) where N total num of vars
 
-tpl_single_let_decl_init = Template("""
-    la  $$a0 ${init_val_address}
+tpl_single_let_decl_init = Template(
+"""${let_var_subexpr}
     sw  $$a0 ${ith_local_offset}($fp) 		# letd: Store initial value of ${identifier}
 """)
 

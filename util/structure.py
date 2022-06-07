@@ -234,7 +234,7 @@ class SymbolTableWithScopes(MutableMapping):
     
     def __getitem__(self, key):
         for i in reversed(range(self.last+1)):
-            if key in self.dict_list[i].keys():
+            if key in self.dict_list[i]: #.keys():
                 return self.dict_list[i][key]
         # If it is not in any of the scopes, look in class definition
         return self.klass.lookupAttribute(key)
@@ -265,6 +265,22 @@ class SymbolTableWithScopes(MutableMapping):
 
     def __repr__(self):
         return self.dict_list.__repr__()
+
+class SymbolTableForLocals(SymbolTableWithScopes):
+    '''
+    Does not use a Klass
+    '''
+    def __init__(self):
+        self.dict_list = [{}]
+        self.last = 0
+
+    def __getitem__(self, key):
+        for i in reversed(range(self.last+1)):
+            if key in self.dict_list[i]: #.keys():
+                return self.dict_list[i][key]
+        # Not a local
+        raise KeyError(key)
+
 
 class PruebasDeEstructura(unittest.TestCase):
     def setUp(self):
