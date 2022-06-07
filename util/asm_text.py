@@ -98,12 +98,12 @@ ${class_method_name}:
 # LET BLOCK
 tpl_single_let_decl_default = Template("""
     la  $$a0 ${default_obj}
-    sw  $$a0 ${ith_local_offset}($fp) 		# letd: Store default value of ${identifier}
+    sw  $$a0 ${ith_local_offset}($$fp) 		# letd: Store default value of ${identifier}
 """)  # ith local offset is calculated: (N-i-1) where N total num of vars
 
 tpl_single_let_decl_init = Template(
 """${let_var_subexpr}
-    sw  $$a0 ${ith_local_offset}($fp) 		# letd: Store initial value of ${identifier}
+    sw  $$a0 ${ith_local_offset}($$fp) 		# letd: Store initial value of ${identifier}
 """)
 
 tpl_let_decl = Template(
@@ -111,7 +111,7 @@ tpl_let_decl = Template(
 # prints single let_decl in sequence, init or default
 
 tpl_local_var = Template("""
-    lw $$a0  ${ith_local_offset}($fp)    # load [${local_var_name}]""")
+    lw $$a0  ${ith_local_offset}($$fp)    # load [${local_var_name}]""")
 
 # NEW EXPR
 tpl_new_expr = Template("""

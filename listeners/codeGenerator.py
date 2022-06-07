@@ -1,4 +1,6 @@
 from enum import Enum
+
+from numpy import var
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
@@ -39,31 +41,34 @@ def getAttrOffset(name: str, attr_list: list[str]) -> int:
 
 def search(varname: str, methodCtx: ParseTree, klass: Klass) -> NS:
     # First look into locals
-    print('Search name', varname)
+    if methodCtx is None:
+        # we are not inside a method, but a case subexpr
+        raise NotImplementedError("CASE EXPR CODEGEN")
+
     try:
         methodCtx.locals[varname]
+        print('is local')
         return NS.LOCALS
     except KeyError as e:
-        print('not a local')
         pass
-    # Second look into params
+    # Second look into params: they may be renamed
     try:
-        params = klass.lookupMethod(methodCtx.method_name).params
+        method_key = methodCtx.method_name.split('.')[1]
+        params = klass.lookupMethod(method_key).params  # method name is incorrect
         if varname in params:
+            print('is formal param')
             return NS.FORMALS
-    except:
-        print('not a param')
+    except Exception as e:
+        print('Method param search error', e)
         pass
     
     # Last, look into klass
     try:
         klass.lookupAttribute(varname)
+        print('is attribute')
         return NS.ATTRIBUTES
-    except KeyError:
-        print('not an attribute')
-        pass
-
-    raise Exception(f"Name {varname} in method {methodCtx.method_name} not found")
+    except KeyError as e:
+        print(f"Name {varname} in method {methodCtx.method_name} not found")
 
 
 
@@ -149,20 +154,27 @@ class codeGenerator(coolListener):
             # Search for name:
 
             var_name = ctx.ID().getText()
-            klass = getActiveClass(ctx)
-            method = getCurrentMethodContext(ctx)
-            print(f"Var {var_name} in {method.method_name}?")
-            
-            # checks if name is in locals, then params, then attributes
-            ns = search(var_name, method, klass)
 
-            if ns==NS.ATTRIBUTES:
-                pass
-            elif ns==NS.FORMALS:
-                pass
-            else:  # ns==NS.LOCALS
-                pass
-            ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
+            if var_name == "self":
+                ctx.code = asm.tpl_expr_self
+            else:
+                klass = getActiveClass(ctx)
+                method = getCurrentMethodContext(ctx)  # might not always be in a method
+                if method is None:
+                    print(f"Var {var_name} in {klass.name}?")
+                else:
+                    print(f"Var {var_name} in {method.method_name}?")
+                
+                # checks if name is in locals, then params, then attributes
+                ns = search(var_name, method, klass)
+
+                if ns==NS.ATTRIBUTES:
+                    pass
+                elif ns==NS.FORMALS:
+                    pass
+                else:  # ns==NS.LOCALS
+                    pass
+                ctx.code='MISSING CODE FOR ID IN NS' + str(ns)
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
@@ -170,6 +182,7 @@ class codeGenerator(coolListener):
             ctx.code = primary.code
         except AttributeError:
             print(f"Primary expression {ctx.getText()} has no generated code")
+            ctx.code = 'MISSING for primary' + primary.getText()
 
     def exitBlock(self, ctx: coolParser.BlockContext):
         inner_code = [expr.code for expr in ctx.expr()
@@ -188,6 +201,7 @@ class codeGenerator(coolListener):
         ctx.locals_index = 0
         
         ctx.locals = SymbolTableForLocals()  # maps local var name -> offset (bytes)
+        # For every param, add to locals?
 
         ctx.code = asm.tpl_on_enter_callee.substitute(
             class_method_name=ctx.method_name,
@@ -271,13 +285,15 @@ class codeGenerator(coolListener):
             if var.expr():
                 let_code += asm.tpl_single_let_decl_init.substitute(
                     let_var_subexpr=var.expr().code,
-                    ith_local_offset=str(offset)
+                    ith_local_offset=str(offset),
+                    identifier=name
                 )
             else:
                 # Load default value in Data Segment
                 let_code += asm.tpl_single_let_decl_default.substitute(
                     default_obj="MISSING: get default for" + var.TYPE().getText(),
-                    ith_local_offset=str(offset)
+                    ith_local_offset=str(offset),
+                    identifier=name
                 )
 
         method.locals.closeScope()
@@ -317,9 +333,21 @@ class codeGenerator(coolListener):
 
     def exitStatic_dispatch(self, ctx: coolParser.Static_dispatchContext):
         ctx.code = '\nMISSING'
+    
+    def exitDispatch(self, ctx:coolParser.DispatchContext):
+        ctx.code = '\nMISSING'
+
+    def exitIf_else(self, ctx:coolParser.If_elseContext):
+        ctx.code = '\nMISSING'
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         ctx.code = '\nMISSING'
 
     def exitMethod_call(self, ctx: coolParser.Method_callContext):
+        ctx.code = '\nMISSING'
+
+    def exitNew(self, ctx:coolParser.NewContext):
+        ctx.code = '\nMISSING'
+
+    def exitAddition(self, ctx:coolParser.AdditionContext):
         ctx.code = '\nMISSING'

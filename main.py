@@ -11,6 +11,8 @@ from listeners.dataSegment import dataSegment
 from listeners.frameSize import frameSize
 from listeners.codeGenerator import codeGenerator
 from pprint import pprint
+import traceback
+import sys
 
 OUT_FILE = lambda x : f'out{x}.asm'
 test_counter = 0
@@ -45,16 +47,20 @@ def compile(file, treeprinter=False):
     print("--method locals--")
     pprint(frameSizeListener.method_locals)
     
-    # dotText = codeGenerator(
-    #     registered_ints=dotData.registered_ints,
-    #     registered_strings=dotData.registered_strings,
-    #     method_locals=frameSizeListener.method_locals
-    # )
-    # walker.walk(dotText, tree)
+    dotText = codeGenerator(
+        registered_ints=dotData.registered_ints,
+        registered_strings=dotData.registered_strings,
+        method_locals=frameSizeListener.method_locals
+    )
+    try:
+        walker.walk(dotText, tree)
+    except AttributeError as e:
+        print(traceback.format_exc())
+        raise AttributeError
 
     with open(OUT_FILE(test_counter), "w") as writer:
         writer.write(dotData.result)
-        #writer.write(dotText.result)
+        writer.write(dotText.result)
     writer.close()
 
 def dummy():
