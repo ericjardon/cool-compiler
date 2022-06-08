@@ -22,6 +22,26 @@ class NS(Enum):
     FORMALS = 2
     ATTRIBUTES = 3
 
+# def inferClass(subExpr:ParseTree, ctx:ParseTree) -> str:
+#     if isinstance(subExpr, coolParser.NewContext):
+#         return subExpr.TYPE().getText()
+    
+#     if isinstance(subExpr, coolParser.Primary_exprContext):
+#         subExpr = subExpr.getChild(0) # move to primary node
+#         if subExpr.ID():
+#             name = subExpr.ID().getText()
+#             klass = getActiveClass(ctx)
+#             ns = search(name)
+#             if ns==NS.ATTRIBUTES:
+#                 return klass.attributes.get(name)
+            
+#         if subExpr.INTEGER():
+#             return 'Int'
+#         if subExpr.TRUE() or subExpr.FALSE():
+#             return 'Bool'
+#         if subExpr.STRING():
+#             return 'String'
+# BETTER JUST EXTEND TYPECHECKER
 
 
 def getActiveClass(ctx: ParseTree) -> Klass:
@@ -39,7 +59,7 @@ def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
     return p
 
 def getMethodOffset(name:str, method_list:list[str])->int:
-    # Offset from dispatch table
+    # Offset from dispatch table. name is Class.Method form
     return method_list.index(name) * 4
 
 def getAttrOffset(name: str, attr_list: list[str]) -> int:
@@ -433,25 +453,50 @@ class codeGenerator(coolListener):
         return params_code
 
     def exitDispatch(self, ctx: coolParser.DispatchContext):
-        pass
-
-    def exitMethod_call(self, ctx: coolParser.Method_callContext):
         # Generate code for params to push
         params_code = self.generatePushingParamsCode(ctx)
-        klass = getActiveClass(ctx)
-        method_key = ctx.ID().getText()
+        
         dispatch_label_name = 'disp_label' + str(self.labels)
         self.labels += 1
-        #methods_list = klass.getAvailableMethods()
-        method_offset = getMethodOffset(method_key, klass)
 
-        filename_str = f'str_const_{self.registered_strings["--filename--"]}'
+        # Caller is whatever expression before .call()
+        load_caller = ctx.expr().code
+        name = ctx.ID().getText()
+        klass = inferClass(ctx) # how to know which klass is in expr?
+        methods_list = klass.getallMethodNames()
+        print("Avail methods of Klass", klass.name)
+        print(methods_list)
+        method_offset = getMethodOffset(name, methods_list)
 
         ctx.code = asm.tpl_before_call.substitute(
             pushing_params_code=params_code,
             load_caller=asm.tpl_caller_self,
             dispatch_label_name=dispatch_label_name,
-            filename_str=filename_str,
+            filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
+            call_line_number='UNKNOWN LINE NO',
+            method_offset=str(method_offset)
+        )
+
+    def exitMethod_call(self, ctx: coolParser.Method_callContext):
+        # Generate code for params to push
+        params_code = self.generatePushingParamsCode(ctx)
+        klass = getActiveClass(ctx)
+        name = ctx.ID().getText()
+
+        methods_list = klass.getallMethodNames()
+        print("Avail methods of Klass", klass.name)
+        print(methods_list)
+        method_offset = getMethodOffset(name, methods_list)
+
+        dispatch_label_name = 'disp_label' + str(self.labels)
+        self.labels += 1
+
+        # Caller is self
+        ctx.code = asm.tpl_before_call.substitute(
+            pushing_params_code=params_code,
+            load_caller=asm.tpl_caller_self,
+            dispatch_label_name=dispatch_label_name,
+            filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
             call_line_number='UNKNOWN LINE NO',
             method_offset=str(method_offset)
         )
