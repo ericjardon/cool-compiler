@@ -9,7 +9,6 @@ java -jar coolc.jar example.cl
 
 ============ 
 
-- Implement getAllMethods list in order for getMethodOffset
-- this allows to implement method, dispatch
-- static dispatch may use other rules
+- To implement dispatch, we must have dataType for every node.
+
 

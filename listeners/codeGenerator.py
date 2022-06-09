@@ -1,12 +1,8 @@
-from copyreg import dispatch_table
 from enum import Enum
-from fileinput import filename
-from re import I
-
-from numpy import var
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
+from listeners.typeChecker import getCurrentScope
 from util.structure import _allClasses as classesDict, lookupClass
 import util.asm_text as asm
 from util.structure import *
@@ -16,32 +12,10 @@ from typing import Tuple
 # User a SymbolTableWithScopes to map a local variable name
 # to its offset
 
-
 class NS(Enum):
     LOCALS = 1
     FORMALS = 2
     ATTRIBUTES = 3
-
-# def inferClass(subExpr:ParseTree, ctx:ParseTree) -> str:
-#     if isinstance(subExpr, coolParser.NewContext):
-#         return subExpr.TYPE().getText()
-    
-#     if isinstance(subExpr, coolParser.Primary_exprContext):
-#         subExpr = subExpr.getChild(0) # move to primary node
-#         if subExpr.ID():
-#             name = subExpr.ID().getText()
-#             klass = getActiveClass(ctx)
-#             ns = search(name)
-#             if ns==NS.ATTRIBUTES:
-#                 return klass.attributes.get(name)
-            
-#         if subExpr.INTEGER():
-#             return 'Int'
-#         if subExpr.TRUE() or subExpr.FALSE():
-#             return 'Bool'
-#         if subExpr.STRING():
-#             return 'String'
-# BETTER JUST EXTEND TYPECHECKER
 
 
 def getActiveClass(ctx: ParseTree) -> Klass:
@@ -133,8 +107,10 @@ class codeGenerator(coolListener):
     def enterKlass(self, ctx: coolParser.KlassContext):
         k = classesDict[ctx.TYPE(0).getText()]
         ctx.activeClass = k
+        objectEnv = DynamicScopedSymbolTable(k)
         for feature in ctx.feature():
             feature.activeClass = k
+            feature.objectEnv = objectEnv
 
     def addClassInitMethods(self):
         '''
@@ -177,24 +153,32 @@ class codeGenerator(coolListener):
         self.result += asm.tpl_global_methods
 
     def exitPrimary(self, ctx: coolParser.PrimaryContext):
+        object_env, active_class = getCurrentScope(ctx)
         if ctx.INTEGER():
             int_value = int(ctx.INTEGER().getText())
             ctx.code = asm.tpl_primary_int.substitute(
                 int_const_name=self.registered_ints[int_value],
                 int_value=int_value
             )
+            ctx.dataType = "Int"
+
         elif ctx.STRING():
             ctx.code='NotImplementedError("String primary")'
+            ctx.dataType = "String"
+
         elif ctx.TRUE():
             ctx.code = asm.tpl_primary_true
+            ctx.dataType = "Bool"
         elif ctx.FALSE():
             ctx.code = asm.tpl_primary_false
+            ctx.dataType = "Bool"
 
         elif ctx.ID():
             # Search for name:
             var_name = ctx.ID().getText()
-
+            active_class = getActiveClass(ctx)
             if var_name == "self":
+                ctx.dataType = active_class.name
                 ctx.code = asm.tpl_expr_self
             else:
                 klass = getActiveClass(ctx)
@@ -236,6 +220,7 @@ class codeGenerator(coolListener):
         primary = ctx.getChild(0)
         try:
             ctx.code = primary.code
+            ctx.dataType = primary.dataType
         except AttributeError:
             print(f"Primary expression {ctx.getText()} has no generated code")
             ctx.code = 'MISSING for primary' + primary.getText()
@@ -328,6 +313,8 @@ class codeGenerator(coolListener):
         # For every let var, add to current methods locals, increase number
         method = getCurrentMethodContext(ctx)
         method.locals.openScope()
+        object_env, _ = getCurrentScope(ctx)
+        object_env.openScope()
 
         for var in ctx.let_decl():
             name = var.ID().getText()
@@ -336,10 +323,17 @@ class codeGenerator(coolListener):
             method.locals_index += 1
 
     def exitLet_expr(self, ctx: coolParser.Let_exprContext):
-        # load default or init values for locals
-        method = getCurrentMethodContext(ctx)
+        # Set dataType
+        object_env, active_class = getCurrentScope(ctx)
+        object_env.closeScope()
+        if ctx.expr().dataType == 'SELF_TYPE':
+            ctx.dataType = active_class.name
+        else:
+            ctx.dataType = ctx.expr().dataType
 
+        # load default or init values for locals
         let_code = ''
+        method = getCurrentMethodContext(ctx)
 
         for var in ctx.let_decl():
             name = var.ID().getText()
@@ -368,12 +362,42 @@ class codeGenerator(coolListener):
         let_code += ctx.expr().code
         ctx.code = let_code
 
+
+    def exitLet_decl(self, ctx: coolParser.Let_declContext):
+        object_env, klass = getCurrentScope(ctx)
+        identifier = ctx.ID().getText()
+        
+        if ctx.expr():  # has initialization, update dataType
+            subexpr_type = ctx.expr().dataType
+            if subexpr_type == 'SELF_TYPE':
+                ctx.dataType = klass.name
+            else:
+                ctx.dataType = subexpr_type
+            object_env[identifier] = subexpr_type
+
+        else:
+            declared_type = ctx.TYPE().getText()
+            object_env[identifier] = declared_type
+
+        
+    
     def exitProgram(self, ctx: coolParser.ProgramContext):
         # Init methods
         self.addClassInitMethods()  # for every class add .init_code
         self.addClassMethods()      # for every class add .code
 
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
+        # Reassign ID's data type
+        object_env, active_class = getCurrentScope(ctx)
+        id = ctx.ID().getText()
+        if id == 'self':
+            dataType = active_class.name
+        else:
+            dataType = ctx.expr().dataType
+        
+        object_env[id] = dataType # may throw error
+        ctx.dataType = dataType
+        
         # Same as evaluation. use search to determine namespace
         # and use the tpl_set_ template accordingly
         subexpr_code = ctx.expr().code
@@ -422,8 +446,18 @@ class codeGenerator(coolListener):
     def exitLess_or_equal(self, ctx: coolParser.Less_or_equalContext):
         ctx.code = '\nMISSING'
 
-    def exitCase_stat(self, ctx: coolParser.Case_statContext):
+    def enterCase_stat(self, ctx: coolParser.Case_statContext):
+        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv.openScope()
+        objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
+
+    def exitCase_stat(self, ctx: coolParser.Case_statContext):        
+        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv.closeScope()
         ctx.code = '\nMISSING'
+
+    def exitIsvoid(self, ctx:coolParser.IsvoidContext):
+        ctx.dataType = 'Bool'
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
         ctx.code = '\nMISSING'
@@ -442,6 +476,15 @@ class codeGenerator(coolListener):
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         ctx.code = '\nMISSING'
+
+    def enterCase_expr(self, ctx: coolParser.Case_exprContext):
+        cases = ctx.case_stat()
+        present_types = []
+        for case in cases:
+            case_type = case.TYPE().getText()
+            present_types.append(case_type)
+        lca = getLCA(present_types)
+        ctx.dataType = lca.name         # dataType
 
     def generatePushingParamsCode(self, ctx: ParseTree) -> str:
         params_code=''
@@ -477,6 +520,12 @@ class codeGenerator(coolListener):
             method_offset=str(method_offset)
         )
 
+    def enterMethod_call(self, ctx: coolParser.Method_callContext):
+        active_class = getActiveClass(ctx)
+        method_name = ctx.ID().getText()
+        method = active_class.lookupMethod(method_name)
+        ctx.dataType = method.type
+    
     def exitMethod_call(self, ctx: coolParser.Method_callContext):
         # Generate code for params to push
         params_code = self.generatePushingParamsCode(ctx)
