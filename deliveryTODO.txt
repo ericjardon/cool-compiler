@@ -10,5 +10,8 @@ java -jar coolc.jar example.cl
 ============ 
 
 - To implement dispatch, we must have dataType for every node.
+    - typeChecker already does this, but only saves static types.
+    - For all assignments we must actually obtain the real, dynamic dataType.
+    - Not all nodes have this implemented.
 
 

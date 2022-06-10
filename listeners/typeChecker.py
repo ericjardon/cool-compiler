@@ -1,8 +1,5 @@
-from cgitb import lookup
-from subprocess import call
 from typing import Tuple, List
 from antlr4.tree.Tree import ParseTree
-from pytest import param
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
 from util.exceptions import *

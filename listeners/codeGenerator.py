@@ -153,7 +153,6 @@ class codeGenerator(coolListener):
         self.result += asm.tpl_global_methods
 
     def exitPrimary(self, ctx: coolParser.PrimaryContext):
-        object_env, active_class = getCurrentScope(ctx)
         if ctx.INTEGER():
             int_value = int(ctx.INTEGER().getText())
             ctx.code = asm.tpl_primary_int.substitute(
@@ -176,37 +175,46 @@ class codeGenerator(coolListener):
         elif ctx.ID():
             # Search for name:
             var_name = ctx.ID().getText()
-            active_class = getActiveClass(ctx)
+            object_env, active_class = getCurrentScope(ctx)
+            
             if var_name == "self":
                 ctx.dataType = active_class.name
                 ctx.code = asm.tpl_expr_self
+            
             else:
-                klass = getActiveClass(ctx)
                 method = getCurrentMethodContext(ctx)  # might not always be in a method
+                
                 if method is None:
-                    print(f"Var {var_name} in {klass.name}?")
+                    print(f"Var {var_name} out of method, in klass: {active_class.name}?")
+
                 else:
                     print(f"Var {var_name} in {method.method_name}?")
                 
                 # checks if name is in locals, then params, then attributes
-                ns = search(var_name, method, klass)
+                ns = search(var_name, method, active_class)
 
                 if ns==NS.ATTRIBUTES:
-                    # Get from self + offset
-                    attrs = klass.getAllAttributeNames()
+                    ctx.dataType = active_class.lookupAttribute(var_name)
+
+                    # self + offset
+                    attrs = active_class.getAllAttributeNames()
                     attr_offset = getAttrOffset(var_name, attrs) 
                     ctx.code = asm.tpl_get_attribute.substitute(
                         attr_offset=attr_offset,
                         identifier=var_name
                     )
+                    
                 elif ns==NS.FORMALS:
-                    # Get from frame + locals + offset
+                    ctx.dataType = object_env[var_name]
+                    # frame + locals + offset
                     param_offset =  getParamOffset(var_name, method)
                     ctx.code= asm.tpl_get_param.substitute(
                         param_offset=param_offset,
                         identifier=var_name
                     )
-                else:  # ns==NS.LOCALS
+                else:  
+                    # NS.LOCALS
+                    ctx.dataType = object_env[var_name]
                     # Get from fp backwards
                     num_locals = self.method_locals[method.method_name]
                     local_var_offset = getLocalVarOffset(var_name,num_locals,method)
@@ -218,9 +226,9 @@ class codeGenerator(coolListener):
 
     def exitPrimary_expr(self, ctx: coolParser.Primary_exprContext):
         primary = ctx.getChild(0)
+        ctx.dataType = primary.dataType
         try:
             ctx.code = primary.code
-            ctx.dataType = primary.dataType
         except AttributeError:
             print(f"Primary expression {ctx.getText()} has no generated code")
             ctx.code = 'MISSING for primary' + primary.getText()

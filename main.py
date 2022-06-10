@@ -52,6 +52,7 @@ def compile(file, treeprinter=False):
         registered_strings=dotData.registered_strings,
         method_locals=frameSizeListener.method_locals
     )
+
     # try:
     #     walker.walk(dotText, tree)
     # except AttributeError as e:
