@@ -80,22 +80,22 @@ tpl_primary_str = Template("""
 
 # PROCEDURE PROTOCOL - CALLER
 tpl_push_param = Template("""${param_subexpr_code} 
-    sw      $$a0    0($$sp)
+    sw      $$a0    0($$sp)		# push parameter
     addiu   $$sp $$sp -4""")
 
 # Method Caller placement
 tpl_caller_self = """
-move    $$a0 $$s0  # self is caller"""
+	move    $a0 $s0  # self is caller"""
 
-tpl_before_call = Template("""
-${pushing_params_code}${load_caller}
-    bne     $$a0 $$zero ${dispatch_label_name}
+tpl_before_call = Template(
+"""${pushing_params_code}${load_caller}
+    bne     $$a0 $$zero ${dispatch_label_name} 		# protect from dispatch to void
 	la      $$a0 ${filename_str}		# run-time check
 	li	    $$t1 ${call_line_number}	# run-time check
 	jal     _dispatch_abort  			# run-time check
 ${dispatch_label_name}:
     lw  $$t1 8($$a0)  # dispatch table
-    lw  $$t1 ${method_offset}($$t1)  # dict[method] -> offset bytes
+    lw  $$t1 ${method_offset}($$t1)  # method ${method_name} 
     jalr    $$t1""")  # return to caller follows
 
 tpl_return_to_caller = Template("""

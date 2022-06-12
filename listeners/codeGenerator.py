@@ -1,6 +1,5 @@
 from enum import Enum
 
-from isort import code
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
@@ -558,8 +557,9 @@ class codeGenerator(coolListener):
             load_caller=asm.tpl_caller_self,
             dispatch_label_name=dispatch_label_name,
             filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
-            call_line_number='UNKNOWN LINE NO',
-            method_offset=str(method_offset)
+            call_line_number=1, # hardcoded for now
+            method_offset=str(method_offset),
+            method_name=name
         )
 
     def enterMethod_call(self, ctx: coolParser.Method_callContext):
