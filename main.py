@@ -40,12 +40,12 @@ def compile(file, treeprinter=False):
     frameSizeListener = frameSize()
     walker.walk(frameSizeListener, tree) 
 
-    print("--registered ints--")
-    pprint(dotData.registered_ints)
+    # print("--registered ints--")
+    # pprint(dotData.registered_ints)
     print("--registered strings--")
     pprint(dotData.registered_strings)
-    print("--method locals--")
-    pprint(frameSizeListener.method_locals)
+    # print("--method locals--")
+    # pprint(frameSizeListener.method_locals)
     
     dotText = codeGenerator(
         registered_ints=dotData.registered_ints,
@@ -56,6 +56,7 @@ def compile(file, treeprinter=False):
     try:
         walker.walk(dotText, tree)
     except AttributeError as e:
+        print("DOT TEXT ERROR:")
         print(traceback.format_exc())
         raise AttributeError
 

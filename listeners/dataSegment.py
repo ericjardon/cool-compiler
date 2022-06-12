@@ -24,8 +24,8 @@ KNOWN_SIZES = {
     'IO':3,
     'Int':4,
     'Bool':4,
-    'String': 5,
-} # Main class size is variable
+    'String': 4,  # is variable
+} # Main class size is variable, as well as string
 
 
 class dataSegment(coolListener):
@@ -194,13 +194,13 @@ class dataSegment(coolListener):
 
     # On enter literal value, add it to str or int stack
     def addStringConst(self, text):
-        byte_size = len(text)
+        byte_size = len(text) - 2 if text.startswith('\"') else len(text)
         if byte_size not in self.registered_ints:
             self.addIntConst(byte_size)
 
         attribute = asm.tpl_string_atr.substitute(
             len_name=self.registered_ints[byte_size],
-            content=f'{text}'  # includes double-quotes
+            content=f'{text}'  # including double-quotes !!!
         )
         self.str_constants_text += asm.tpl_const_obj_start.substitute(
             name='str_const'+str(self.str_constants_count),

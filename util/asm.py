@@ -227,6 +227,7 @@ ${name}_protObj:
 )
 
 tpl_null_string_const = Template("""
+    .word   -1
 $name:
 	.word	4
 	.word	5

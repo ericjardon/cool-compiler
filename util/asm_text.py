@@ -75,6 +75,8 @@ ${label_if_true}:""")
 tpl_primary_int = Template("""
 	la	$$a0 ${int_const_name}		# ${int_value}""")
 
+tpl_primary_str = Template("""
+	lw	$$a0 ${str_const_name}		# \"${str_value}\"""")
 
 # PROCEDURE PROTOCOL - CALLER
 tpl_push_param = Template("""${param_subexpr_code} 

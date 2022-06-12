@@ -162,7 +162,11 @@ class codeGenerator(coolListener):
             ctx.dataType = "Int"
 
         elif ctx.STRING():
-            ctx.code='NotImplementedError("String primary")'
+            str_value = ctx.STRING().getText()
+            ctx.code = asm.tpl_primary_str.substitute(
+                str_const_name=self.registered_strings[str_value],
+                str_value=str_value
+            )
             ctx.dataType = "String"
 
         elif ctx.TRUE():
