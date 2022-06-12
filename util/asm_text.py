@@ -162,9 +162,7 @@ tpl_not_expr = Template(
 ${label_name}:""") # rest of code follows
 
 
-# BINARY OPERATORS
-
-# -- Boolean Logic --
+# COMPARISON
 tpl_equals_expr = Template(
 """${left_subexpr}
 	sw	$$a0 0($$sp) 		# eq push left subexp to stack
@@ -206,8 +204,21 @@ tpl_less_than_or_equal_expr = Template(
 ${label_name}:""")
 
 
-#  -- Arithmetic --
-# Addition
+# IF-THEN-ELSE
+tpl_if_else = Template(
+"""${predicate_subexpr}
+	la	$$a0 bool_const1 	# true
+	lw	$$t1 12($$a0) 		# if: get value from boolean
+	beqz	$$t1 ${label_else} 		# if: jump if false
+	la	$$a0 int_const0 		# 33
+	b	${label_endif} 			# if: jump to endif
+${label_else}:
+	la	$$a0 int_const1 		# 36
+${label_endif}:""")
+
+
+#  ARITHMETIC
+
 tpl_arith_addition_expr = Template("""
 ${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack

@@ -657,7 +657,8 @@ class codeGenerator(coolListener):
             dispatch_label_name=dispatch_label_name,
             filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
             call_line_number='UNKNOWN LINE NO',
-            method_offset=str(method_offset)
+            method_offset=str(method_offset),
+            method_name=name
         )
 
 

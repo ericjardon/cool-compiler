@@ -1,10 +1,9 @@
 class Main inherits IO{
  x: Int;
-
- main(): Bool {{ 
-        9 < 9;
-        9 = 9;
-        9<=9;
+ main(): Object {{ 
+        if (true) then 
+            33
+        else 36 
+        fi;
     }};
-
 };
