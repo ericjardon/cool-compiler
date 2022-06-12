@@ -1,4 +1,6 @@
 from enum import Enum
+
+from isort import code
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
@@ -25,6 +27,11 @@ def getActiveClass(ctx: ParseTree) -> Klass:
 
     return p.activeClass
 
+def getDynamicCurrentScope(ctx: ParseTree) -> Tuple[SymbolTableWithScopes]:
+    p = ctx.parentCtx
+    while p and not hasattr(p, "objectEnv") and not hasattr(p, "activeClass"):
+        p = p.parentCtx
+    return p.objectEnv, p.activeClass
 
 def getCurrentMethodContext(ctx: ParseTree) -> ParseTree:
     p = ctx.parentCtx
@@ -175,7 +182,7 @@ class codeGenerator(coolListener):
         elif ctx.ID():
             # Search for name:
             var_name = ctx.ID().getText()
-            object_env, active_class = getCurrentScope(ctx)
+            object_env, active_class = getDynamicCurrentScope(ctx)
             
             if var_name == "self":
                 ctx.dataType = active_class.name
@@ -233,16 +240,31 @@ class codeGenerator(coolListener):
             print(f"Primary expression {ctx.getText()} has no generated code")
             ctx.code = 'MISSING for primary' + primary.getText()
 
-    def exitBlock(self, ctx: coolParser.BlockContext):
+    def exitBlock(self, ctx: coolParser.BlockContext):        
         inner_code = [expr.code for expr in ctx.expr()
                      ]
         ctx.code = ''.join(inner_code)
+
+
 
     def enterFeature_function(self, ctx: coolParser.Feature_functionContext):
         ctx.method_name = ctx.activeClass.name + '.' + ctx.ID().getText()
         
         methodObj = ctx.activeClass.lookupMethod(ctx.ID().getText())
-        ctx.params_list = list(methodObj.params.keys())
+        parameters = list(methodObj.params.items())
+        params_ids = []
+
+        ctx.objectEnv.openScope()
+        for id, type in parameters:
+            params_ids.append(id)
+            ctx.objectEnv[id] = type
+
+        ctx.params_list = params_ids
+
+        body = ctx.expr()
+        body.objectEnv = ctx.objectEnv
+        body.activeClass = ctx.activeClass
+        
 
         num_locals = self.method_locals[ctx.method_name]
         ctx.frame_size_bytes = 12 + num_locals * 4  # 12 for fp, s0 and ra
@@ -253,7 +275,7 @@ class codeGenerator(coolListener):
         ctx.locals_index = 0
         
         ctx.locals = SymbolTableForLocals()  # maps local var name -> offset (bytes)
-        # For every param, add to locals?
+        # For every param, add to locals? 
 
         ctx.code = asm.tpl_on_enter_callee.substitute(
             class_method_name=ctx.method_name,
@@ -280,6 +302,7 @@ class codeGenerator(coolListener):
             formals_bytes=formals_bytes,
             frame_and_formals_bytes=str(ctx.frame_size_bytes + formals_bytes)
         )
+        ctx.objectEnv.closeScope()
 
     def exitFeature_attribute(self, ctx: coolParser.Feature_attributeContext):
 
@@ -321,7 +344,7 @@ class codeGenerator(coolListener):
         # For every let var, add to current methods locals, increase number
         method = getCurrentMethodContext(ctx)
         method.locals.openScope()
-        object_env, _ = getCurrentScope(ctx)
+        object_env, _ = getDynamicCurrentScope(ctx)
         object_env.openScope()
 
         for var in ctx.let_decl():
@@ -332,7 +355,7 @@ class codeGenerator(coolListener):
 
     def exitLet_expr(self, ctx: coolParser.Let_exprContext):
         # Set dataType
-        object_env, active_class = getCurrentScope(ctx)
+        object_env, active_class = getDynamicCurrentScope(ctx)
         object_env.closeScope()
         if ctx.expr().dataType == 'SELF_TYPE':
             ctx.dataType = active_class.name
@@ -372,7 +395,7 @@ class codeGenerator(coolListener):
 
 
     def exitLet_decl(self, ctx: coolParser.Let_declContext):
-        object_env, klass = getCurrentScope(ctx)
+        object_env, klass = getDynamicCurrentScope(ctx)
         identifier = ctx.ID().getText()
         
         if ctx.expr():  # has initialization, update dataType
@@ -396,13 +419,12 @@ class codeGenerator(coolListener):
 
     def exitAssignment(self, ctx: coolParser.AssignmentContext):
         # Reassign ID's data type
-        object_env, active_class = getCurrentScope(ctx)
+        object_env, active_class = getDynamicCurrentScope(ctx)
         id = ctx.ID().getText()
         if id == 'self':
             dataType = active_class.name
         else:
             dataType = ctx.expr().dataType
-        
         object_env[id] = dataType # may throw error
         ctx.dataType = dataType
         
@@ -455,17 +477,18 @@ class codeGenerator(coolListener):
         ctx.code = '\nMISSING CODE FOR Less_or_equalContext'
 
     def enterCase_stat(self, ctx: coolParser.Case_statContext):
-        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv, _ = getDynamicCurrentScope(ctx)
         objectEnv.openScope()
         objectEnv[ctx.ID().getText()] = ctx.TYPE().getText()
 
     def exitCase_stat(self, ctx: coolParser.Case_statContext):        
-        objectEnv, _ = getCurrentScope(ctx)
+        objectEnv, _ = getDynamicCurrentScope(ctx)
         objectEnv.closeScope()
         ctx.code = '\nMISSING'
 
     def exitIsvoid(self, ctx:coolParser.IsvoidContext):
         ctx.dataType = 'Bool'
+        ctx.code = '\nMISSING CODE FOR IsVoidContext'
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
         ctx.code = '\nMISSING CODE FOR SubtractionContext'
@@ -514,10 +537,13 @@ class codeGenerator(coolListener):
         self.labels += 1
 
         # Caller is whatever expression before .call()
-        load_caller = ctx.expr().code
+        print("TEXT: ", ctx.getText())
+        load_caller = ""
+        for expr in ctx.expr():
+            load_caller += expr.code
         name = ctx.ID().getText()
-        print(f"Dispatch caller <{ctx.expr().dataType}>")
-        klass = getKlass(ctx.expr().dataType, ctx)
+        print(f"Dispatch caller <{ctx.expr()[0].dataType}>")
+        klass = getKlass(ctx.expr()[0].dataType, ctx)
         methods_list = klass.getallMethodNames()
         print("Avail methods of Klass", klass.name)
         print(methods_list)
