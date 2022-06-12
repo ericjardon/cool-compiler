@@ -2,7 +2,7 @@ from enum import Enum
 from util import asm
 from antlr.coolListener import coolListener
 from antlr.coolParser import coolParser
-from listeners.typeChecker import getCurrentScope
+from listeners.typeChecker import getCurrentScope, getKlass
 from util.structure import _allClasses as classesDict, lookupClass
 import util.asm_text as asm
 from util.structure import *
@@ -443,16 +443,16 @@ class codeGenerator(coolListener):
             )
 
     def exitNot(self, ctx: coolParser.NotContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR NotContext'
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR EqualsContext'
 
     def exitLess_than(self, ctx: coolParser.Less_thanContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR Less_thanContext'
 
     def exitLess_or_equal(self, ctx: coolParser.Less_or_equalContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR Less_or_equalContext'
 
     def enterCase_stat(self, ctx: coolParser.Case_statContext):
         objectEnv, _ = getCurrentScope(ctx)
@@ -468,22 +468,22 @@ class codeGenerator(coolListener):
         ctx.dataType = 'Bool'
 
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR SubtractionContext'
 
     def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR MultiplicationContext'
 
     def exitDivision(self, ctx: coolParser.DivisionContext):
-        ctx.code = '\nMISSING'
+        ctx.code =  '\nMISSING CODE FOR DivisionContext'
 
     def exitStatic_dispatch(self, ctx: coolParser.Static_dispatchContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR Static_dispatchContext'
     
     def exitIf_else(self, ctx:coolParser.If_elseContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR If_elseContext'
 
     def exitWhile(self, ctx: coolParser.WhileContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR <WhileContext>'
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()
@@ -493,6 +493,9 @@ class codeGenerator(coolListener):
             present_types.append(case_type)
         lca = getLCA(present_types)
         ctx.dataType = lca.name         # dataType
+    
+    def exitCase_expr(self, ctx: coolParser.Case_exprContext):
+        ctx.code = '\nMISSING CODE FOR <Case_exprContext>'
 
     def generatePushingParamsCode(self, ctx: ParseTree) -> str:
         params_code=''
@@ -513,7 +516,8 @@ class codeGenerator(coolListener):
         # Caller is whatever expression before .call()
         load_caller = ctx.expr().code
         name = ctx.ID().getText()
-        klass = inferClass(ctx) # how to know which klass is in expr?
+        print(f"Dispatch caller <{ctx.expr().dataType}>")
+        klass = getKlass(ctx.expr().dataType, ctx)
         methods_list = klass.getallMethodNames()
         print("Avail methods of Klass", klass.name)
         print(methods_list)
@@ -560,7 +564,7 @@ class codeGenerator(coolListener):
 
 
     def exitNew(self, ctx:coolParser.NewContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR <NewContext>'
 
     def exitAddition(self, ctx:coolParser.AdditionContext):
-        ctx.code = '\nMISSING'
+        ctx.code = '\nMISSING CODE FOR <AdditionContext>'

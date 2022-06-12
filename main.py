@@ -53,11 +53,11 @@ def compile(file, treeprinter=False):
         method_locals=frameSizeListener.method_locals
     )
 
-    # try:
-    #     walker.walk(dotText, tree)
-    # except AttributeError as e:
-    #     print(traceback.format_exc())
-    #     raise AttributeError
+    try:
+        walker.walk(dotText, tree)
+    except AttributeError as e:
+        print(traceback.format_exc())
+        raise AttributeError
 
     with open(OUT_FILE(test_counter), "w") as writer:
         writer.write(dotData.result)

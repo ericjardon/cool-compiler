@@ -132,7 +132,6 @@ class Klass():
     def recurMethodNames(self, stack, defined_methods=None) -> list[str]:
         if not defined_methods:
             defined_methods = set()
-
         for method in reversed(list(self.methods.keys())):
             if method not in defined_methods:
                 defined_methods.add(method)
@@ -141,7 +140,7 @@ class Klass():
         if self.name == "Object":
             return stack[::-1]
         else:
-            return _allClasses[self.inherits].getAvailableMethods(stack, defined_methods)
+            return _allClasses[self.inherits].recurMethodNames(stack, defined_methods)
     
     def getAllAttributeNames(self)->list[str]:
         """
