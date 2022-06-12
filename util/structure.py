@@ -252,6 +252,7 @@ class SymbolTableWithScopes(MutableMapping):
     
     def __getitem__(self, key):
         for i in reversed(range(self.last+1)):
+            
             if key in self.dict_list[i]: #.keys():
                 return self.dict_list[i][key]
         # If it is not in any of the scopes, look in class definition
@@ -300,6 +301,7 @@ class SymbolTableForLocals(SymbolTableWithScopes):
         raise KeyError(key)
 
 class DynamicScopedSymbolTable(SymbolTableWithScopes):
+
     def __setitem__(self, key, value):
         # does not raise error
         self.dict_list[self.last][key] = value
