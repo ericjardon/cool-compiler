@@ -1,3 +1,4 @@
+from cProfile import label
 from enum import Enum
 
 from util import asm
@@ -468,16 +469,51 @@ class codeGenerator(coolListener):
             )
 
     def exitNot(self, ctx: coolParser.NotContext):
-        ctx.code = '\nMISSING CODE FOR NotContext'
+        arg_subexpr = ctx.expr().code
+        label_name = "not_label" + str(self.labels)
+        self.labels += 1
+
+        ctx.code = asm.tpl_not_expr.substitute(
+            subexpr_code = arg_subexpr,
+            label_name = label_name
+        )
 
     def exitEquals(self, ctx: coolParser.EqualsContext):
-        ctx.code = '\nMISSING CODE FOR EqualsContext'
+        left_subexpr = ctx.expr(0).code
+        right_subexpr = ctx.expr(1).code
+        label_name = "eq_label" + str(self.labels)
+        self.labels += 1
+
+        ctx.code = asm.tpl_equals_expr.substitute(
+            left_subexpr=left_subexpr,
+            right_subexpr=right_subexpr,
+            label_name=label_name
+        )
+
 
     def exitLess_than(self, ctx: coolParser.Less_thanContext):
-        ctx.code = '\nMISSING CODE FOR Less_thanContext'
+        left_subexpr = ctx.expr(0).code
+        right_subexpr = ctx.expr(1).code
+        label_name = "lt_label" + str(self.labels)
+        self.labels += 1
 
-    def exitLess_or_equal(self, ctx: coolParser.Less_or_equalContext):
-        ctx.code = '\nMISSING CODE FOR Less_or_equalContext'
+        ctx.code = asm.tpl_less_than_expr.substitute(
+            left_subexpr=left_subexpr,
+            right_subexpr=right_subexpr,
+            label_name=label_name
+        )
+
+    def exitLess_or_equal(self, ctx:coolParser.Less_or_equalContext):
+        left_subexpr = ctx.expr(0).code
+        right_subexpr = ctx.expr(1).code
+        label_name = "lte_label" + str(self.labels)
+        self.labels += 1
+
+        ctx.code = asm.tpl_less_than_or_equal_expr.substitute(
+            left_subexpr=left_subexpr,
+            right_subexpr=right_subexpr,
+            label_name=label_name
+        )
 
     def enterCase_stat(self, ctx: coolParser.Case_statContext):
         objectEnv, _ = getDynamicCurrentScope(ctx)
@@ -503,7 +539,40 @@ class codeGenerator(coolListener):
         ctx.code =  '\nMISSING CODE FOR DivisionContext'
 
     def exitStatic_dispatch(self, ctx: coolParser.Static_dispatchContext):
-        ctx.code = '\nMISSING CODE FOR Static_dispatchContext'
+        # Generate code for params to push
+        params_code = self.generatePushingParamsCode(ctx)
+        
+        dispatch_label_name = 'disp_label' + str(self.labels)
+        self.labels += 1
+
+        # Caller is whatever expression before .call()
+        load_caller = ""
+        for expr in ctx.expr():
+            load_caller += expr.code
+
+        name = ctx.ID().getText()
+        print(f"Static Dispatch caller <{ctx.expr()[0].dataType}>")
+
+        klass = getKlass(ctx.TYPE().getText(), ctx)
+        
+        methods_list = klass.getallMethodNames()
+
+        print("Avail methods of @Parent", klass.name)
+        print(methods_list)
+        disp_tab_name=klass.name+'_dispTab'
+        
+        method_offset = getMethodOffset(name, methods_list)
+
+        ctx.code = asm.tpl_before_call_static_dispatch.substitute(
+            pushing_params_code=params_code,
+            load_caller=load_caller,
+            dispatch_label_name=dispatch_label_name,
+            filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
+            call_line_number=1, # hardcoded for now
+            disp_tab_name=disp_tab_name,
+            method_offset=str(method_offset),
+            method_name=name
+        )
     
     def exitIf_else(self, ctx:coolParser.If_elseContext):
         ctx.code = '\nMISSING CODE FOR If_elseContext'
@@ -540,7 +609,6 @@ class codeGenerator(coolListener):
         self.labels += 1
 
         # Caller is whatever expression before .call()
-        print("TEXT: ", ctx.getText())
         load_caller = ""
         for expr in ctx.expr():
             load_caller += expr.code
@@ -554,7 +622,7 @@ class codeGenerator(coolListener):
 
         ctx.code = asm.tpl_before_call.substitute(
             pushing_params_code=params_code,
-            load_caller=asm.tpl_caller_self,
+            load_caller=load_caller,
             dispatch_label_name=dispatch_label_name,
             filename_str='str_const_' + str(self.registered_strings['"--filename--"']),
             call_line_number=1, # hardcoded for now

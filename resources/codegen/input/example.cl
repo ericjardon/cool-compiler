@@ -1,8 +1,10 @@
 class Main inherits IO{
-some : String <- "some";
-main():Int {{
-    97;
-    self.out_string(some);
-    98;
-}};
+ x: Int;
+
+ main(): Bool {{ 
+        9 < 9;
+        9 = 9;
+        9<=9;
+    }};
+
 };

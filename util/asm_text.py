@@ -98,6 +98,17 @@ ${dispatch_label_name}:
     lw  $$t1 ${method_offset}($$t1)  # method ${method_name} 
     jalr    $$t1""")  # return to caller follows
 
+tpl_before_call_static_dispatch = Template(
+"""${pushing_params_code}${load_caller}
+    bne     $$a0 $$zero ${dispatch_label_name} 		# protect from dispatch to void
+	la      $$a0 ${filename_str}		# run-time check
+	li	    $$t1 ${call_line_number}	# run-time check
+	jal     _dispatch_abort  			# run-time check
+${dispatch_label_name}:
+    la	$$t1	${disp_tab_name}  # static dispatch
+    lw  $$t1 ${method_offset}($$t1)  # method ${method_name} 
+    jalr    $$t1""")  # return to caller follows
+
 tpl_return_to_caller = Template("""
 	lw	$$fp ${frame_size_bytes}($$sp) 		# m: restore $$fp
 	lw	$$s0 ${frame_size_bytes_minus_4}($$sp) 		# m: restore $$s0 (self)
@@ -141,20 +152,72 @@ tpl_new_expr = Template("""
 	jal	${class_name}_init""")
 
 
+# NOT
+tpl_not_expr = Template(
+"""${subexpr_code}
+	lw	$$t1 12($$a0) 		# not: value of Bool
+	la	$$a0 bool_const1 	# not: loading true
+	beqz	$$t1 ${label_name} 		# not: branch if value is 0 (false)
+	la	$$a0 bool_const0 	# not: load false
+${label_name}:""") # rest of code follows
 
 
-# ARITHMETIC
+# BINARY OPERATORS
 
-tpl_arith_add_expr = Template("""
+# -- Boolean Logic --
+tpl_equals_expr = Template(
+"""${left_subexpr}
+	sw	$$a0 0($$sp) 		# eq push left subexp to stack
+	addiu	$$sp $$sp -4 		# eq ${right_subexpr}
+	lw	$$s1 4($$sp) 		# eq: get saved value from the stack
+	addiu	$$sp $$sp 4 		# eq
+	move	$$t1 $$s1 		# eq: load values to compare
+	move	$$t2 $$a0 		# eq
+	la	$$a0 bool_const1 	# eq: load boolean true
+	beq	$$t1 $$t2 ${label_name} 		# eq: if identical
+	la	$$a1 bool_const0 	# eq: load boolean false
+	jal	equality_test 		# eq
+${label_name}:""")
+
+tpl_less_than_expr = Template(
+"""${left_subexpr}
+	sw	$$a0 0($$sp) 		# lt push left subexp to stack
+	addiu	$$sp $$sp -4 		# lt ${right_subexpr}
+	lw	$$s1 4($$sp) 		# lt: get saved value from the stack
+	addiu	$$sp $$sp 4 		# <=
+	lw	$$t1 12($$s1) 		# <=
+	lw	$$t2 12($$a0) 		# <=
+	la	$$a0 bool_const1 	# <=
+	blt	$$t1 $$t2 ${label_name} 		# <=
+	la	$$a0 bool_const0 	# <=
+${label_name}:""")
+
+tpl_less_than_or_equal_expr = Template(
+"""${left_subexpr}
+	sw	$$a0 0($$sp) 		# <= push left subexp to stack
+	addiu	$$sp $$sp -4 		# <= ${right_subexpr}
+	lw	$$s1 4($$sp) 		# <= : get saved value from the stack
+	addiu	$$sp $$sp 4 		# <=
+	lw	$$t1 12($$s1) 		# <=  
+	lw	$$t2 12($$a0) 		# <=
+	la	$$a0 bool_const1 	# <=
+	ble	$$t1 $$t2 ${label_name} 		# <=
+	la	$$a0 bool_const0 	# <=
+${label_name}:""")
+
+
+#  -- Arithmetic --
+# Addition
+tpl_arith_addition_expr = Template("""
 ${left_subexpr_code}    
-	sw	$$a0 0($$sp) 		# arith: push left subexp to the stack
-	addiu	$$sp $$sp -4 		# arith
+	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
+	addiu	$$sp $$sp -4 		# add
 ${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
-	lw	$$s1 4($$sp) 		# arith: pop left subexpr from stack into $$s1
-	addiu	$$sp $$sp 4 		# arith
-	lw	$$t2 12($$s1) 		# arith: load Int.value of left into t2
-	lw	$$t1 12($$a0) 		# arith: load Int.value of right into t1
-	add	$$t1 $$t2 $$t1 		# arith
-	sw	$$t1 12($$a0) 		# arith: store result into new Int.value""")
+	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
+	addiu	$$sp $$sp 4 		# add
+	lw	$$t2 12($$s1) 		# add: load Int.value of left into t2
+	lw	$$t1 12($$a0) 		# add: load Int.value of right into t1
+	add	$$t1 $$t2 $$t1 		# add
+	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
 
