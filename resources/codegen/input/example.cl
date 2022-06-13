@@ -1,9 +1,14 @@
 class Main inherits IO{
- x: Int;
+ x: Int <- 199;
  main(): Object {{ 
-        if (true) then 
-            33
-        else 36 
+        if ((x) < 200) then {
+            x <- 1;
+            "verdadero";
+        }
+        else  {
+            x <- 0;
+            "falso";
+        }
         fi;
     }};
 };

@@ -76,7 +76,7 @@ tpl_primary_int = Template("""
 	la	$$a0 ${int_const_name}		# ${int_value}""")
 
 tpl_primary_str = Template("""
-	lw	$$a0 ${str_const_name}		# \"${str_value}\"""")
+	la	$$a0 ${str_const_name}		# ${str_value}""")
 
 # PROCEDURE PROTOCOL - CALLER
 tpl_push_param = Template("""${param_subexpr_code} 
@@ -207,14 +207,11 @@ ${label_name}:""")
 # IF-THEN-ELSE
 tpl_if_else = Template(
 """${predicate_subexpr}
-	la	$$a0 bool_const1 	# true
 	lw	$$t1 12($$a0) 		# if: get value from boolean
-	beqz	$$t1 ${label_else} 		# if: jump if false
-	la	$$a0 int_const0 		# 33
+	beqz	$$t1 ${label_else} 		# if: jump if false ${code_block_if}
 	b	${label_endif} 			# if: jump to endif
-${label_else}:
-	la	$$a0 int_const1 		# 36
-${label_endif}:""")
+${label_else}:${code_block_else}
+${label_endif}:""")  
 
 
 #  ARITHMETIC

@@ -160,7 +160,12 @@ class codeGenerator(coolListener):
         self.result += asm.tpl_global_methods
 
     def exitPrimary(self, ctx: coolParser.PrimaryContext):
-        if ctx.INTEGER():
+        if ctx.expr():
+            # nested expr in parentheses
+            ctx.dataDtype = ctx.expr().dataType
+            ctx.code = ctx.expr().code
+        
+        elif ctx.INTEGER():
             int_value = int(ctx.INTEGER().getText())
             ctx.code = asm.tpl_primary_int.substitute(
                 int_const_name=self.registered_ints[int_value],
@@ -177,6 +182,7 @@ class codeGenerator(coolListener):
             ctx.dataType = "String"
 
         elif ctx.TRUE():
+            print("TRUE LITERAL")
             ctx.code = asm.tpl_primary_true
             ctx.dataType = "Bool"
         elif ctx.FALSE():
@@ -575,7 +581,22 @@ class codeGenerator(coolListener):
         )
     
     def exitIf_else(self, ctx:coolParser.If_elseContext):
-        ctx.code = '\nMISSING CODE FOR If_elseContext'
+        predicate_subexpr = ctx.expr(0).code
+        code_block_if = ctx.expr(1).code
+        code_block_else = ctx.expr(2).code
+
+        label_else = 'label_else' + str(self.labels)
+        label_endif = 'label_endif' + str(self.labels)
+        self.labels += 1
+
+        ctx.code = asm.tpl_if_else.substitute(
+            predicate_subexpr=predicate_subexpr,
+            label_else=label_else,
+            code_block_if=code_block_if,
+            label_endif=label_endif,
+            code_block_else=code_block_else
+        )
+
 
     def exitWhile(self, ctx: coolParser.WhileContext):
         ctx.code = '\nMISSING CODE FOR <WhileContext>'

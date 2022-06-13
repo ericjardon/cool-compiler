@@ -63,6 +63,7 @@ def compile(file, treeprinter=False):
     with open(OUT_FILE(test_counter), "w") as writer:
         writer.write(dotData.result)
         writer.write(dotText.result)
+        writer.write("\n")
     writer.close()
 
 def dummy():
