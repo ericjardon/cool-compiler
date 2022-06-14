@@ -1,6 +1,7 @@
 class Main inherits IO{
- x: Int <- 199;
+ i: Int <- 0;
  main(): Object {{ 
-        5 * 2;
+        
+        while (i < 5) loop i <- i + 1 pool.type_name();
     }};
 };

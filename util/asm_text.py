@@ -213,6 +213,16 @@ tpl_if_else = Template(
 ${label_else}:${code_block_else}
 ${label_endif}:""")  
 
+# WHILE-LOOP_POOL
+tpl_while_loop = Template(
+"""
+${predicate_label}:	${predicate_subexpr}
+${true_label}:
+	lw	$$t1	12($$a0)			# while
+	beq	$$t1	$$zero	${false_label}		# while condition check	${true_code}
+${false_label}:
+	move	$$a0	$$zero		# end while"""
+)
 
 #  ARITHMETIC
 

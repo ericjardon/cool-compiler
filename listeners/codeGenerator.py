@@ -599,7 +599,22 @@ class codeGenerator(coolListener):
 
 
     def exitWhile(self, ctx: coolParser.WhileContext):
-        ctx.code = '\nMISSING CODE FOR <WhileContext>'
+        predicate_subexpr = ctx.expr()[0]
+        loop_expr = ctx.expr()[1]
+
+        predicate_label_name = 'while-pred' + str(self.labels)
+        true_label_name = 'while-true' + str(self.labels)
+        false_label_name = 'while-false' + str(self.labels)
+        self.labels += 1
+
+
+        ctx.code = asm.tpl_while_loop.substitute(
+            predicate_label= predicate_label_name,
+            predicate_subexpr= predicate_subexpr.code,
+            true_label= true_label_name,
+            false_label= false_label_name,
+            true_code = loop_expr.code,
+        )
 
     def enterCase_expr(self, ctx: coolParser.Case_exprContext):
         cases = ctx.case_stat()

@@ -29,7 +29,7 @@ str_const9:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const4
+	.word	int_const0
 	.byte	0	
 	.align	2
 	.word	-1
@@ -37,7 +37,7 @@ str_const8:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const1
+	.word	int_const3
 	.ascii	"Main"
 	.byte	0	
 	.align	2
@@ -46,7 +46,7 @@ str_const7:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const5
+	.word	int_const4
 	.ascii	"String"
 	.byte	0	
 	.align	2
@@ -55,7 +55,7 @@ str_const6:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const1
+	.word	int_const3
 	.ascii	"Bool"
 	.byte	0	
 	.align	2
@@ -64,7 +64,7 @@ str_const5:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const2
+	.word	int_const5
 	.ascii	"Int"
 	.byte	0	
 	.align	2
@@ -73,7 +73,7 @@ str_const4:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const3
+	.word	int_const6
 	.ascii	"IO"
 	.byte	0	
 	.align	2
@@ -82,7 +82,7 @@ str_const3:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const5
+	.word	int_const4
 	.ascii	"Object"
 	.byte	0	
 	.align	2
@@ -91,7 +91,7 @@ str_const2:
 	.word	4
 	.word	8
 	.word	String_dispTab
-	.word	int_const6
+	.word	int_const7
 	.ascii	"<basic class>"
 	.byte	0	
 	.align	2
@@ -100,7 +100,7 @@ str_const1:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const7
+	.word	int_const2
 	.ascii	"\n"
 	.byte	0	
 	.align	2
@@ -124,49 +124,49 @@ int_const7:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	1
+	.word	13
 	.word	-1
 int_const6:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	13
+	.word	2
 	.word	-1
 int_const5:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	6
+	.word	3
 	.word	-1
 int_const4:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	0
+	.word	6
 	.word	-1
 int_const3:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	2
+	.word	4
 	.word	-1
 int_const2:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	3
+	.word	1
 	.word	-1
 int_const1:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	4
+	.word	5
 	.word	-1
 int_const0:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	5
+	.word	0
 	.word	-1
 bool_const0:
 	.word	3
@@ -230,6 +230,10 @@ Main_dispTab:
 	.word	Object.abort
 	.word	Object.type_name
 	.word	Object.copy
+	.word	IO.out_string
+	.word	IO.out_int
+	.word	IO.in_string
+	.word	IO.in_int
 	.word	Main.main
 	.word	-1 
 Object_protObj:
@@ -258,13 +262,14 @@ String_protObj:
 	.word	4 
 	.word	5 
 	.word	String_dispTab 
-	.word	int_const4 
+	.word	int_const0 
 	.word	0 
 	.word	-1 
 Main_protObj:
 	.word	5 
-	.word	3 
+	.word	4 
 	.word	Main_dispTab 
+	.word	int_const0 
 	.globl	heap_start 
 heap_start:
 	.word	0 
@@ -350,7 +355,9 @@ Main_init:
 	sw	$ra 4($sp) 
 	addiu	$fp $sp 4 
 	move	$s0 $a0 
-	jal	Object_init 
+	jal	IO_init 
+	la	$a0 int_const0 		# 0
+	sw	$a0 12($s0) 
 	move	$a0 $s0 
 	lw	$fp 12($sp) 
 	lw	$s0 8($sp) 
@@ -364,10 +371,25 @@ Main.main:
 	sw	$ra 4($sp) 		# m: save $ra
 	addiu	$fp $sp 4 		# m: $fp points to locals
 	move	$s0 $a0 		# m: self to $s0
-	la	$a0 int_const0 		# 5
+label1:
+	lw	$a0 12($s0) 		# load [i], class cool.structure.Attribute
+	sw	$a0 0($sp) 		# <=: keep left subexp in the stack
+	addiu	$sp $sp -4 		# <=
+	la	$a0 int_const1 		# 5
+	lw	$s1 4($sp) 		# <=: get saved value from the stack
+	addiu	$sp $sp 4 		# <=
+	lw	$t1 12($s1) 		# <=
+	lw	$t2 12($a0) 		# <=
+	la	$a0 bool_const1 	# <=
+	blt	$t1 $t2 label3 		# <=
+	la	$a0 bool_const0 	# <=
+label3:
+	lw	$t1 12($a0) 		# while
+	beq	$t1 $zero label2 	# while
+	lw	$a0 12($s0) 		# load [i], class cool.structure.Attribute
 	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
 	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const1 		# 4
+	la	$a0 int_const2 		# 1
 	jal	Object.copy 
 	lw	$s1 4($sp) 		# ar: get saved value from the stack
 	addiu	$sp $sp 4 		# ar
@@ -375,39 +397,18 @@ Main.main:
 	lw	$t1 12($a0) 		# ar
 	add	$t1 $t2 $t1 		# ar
 	sw	$t1 12($a0) 		# ar
-	la	$a0 int_const0 		# 5
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const1 		# 4
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	sub	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
-	la	$a0 int_const2 		# 3
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const3 		# 2
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	mul	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
-	la	$a0 int_const2 		# 3
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const3 		# 2
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	div	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
+	sw	$a0 12($s0) 		# assignment of i
+	b	label1 			# while
+label2:
+	move	$a0 $zero 		# end while
+	bne	$a0 $zero label0 	# at: protect from dispatch to void
+	la	$a0 str_const0 
+	li	$t1 5 			# at: line number
+	jal	_dispatch_abort 
+label0:
+	lw	$t1 8($a0) 		# at: find dispatch table
+	lw	$t1 4($t1) 		# at: Object.type_name is at offset 1
+	jalr	$t1 
 	lw	$fp 12($sp) 		# m: restore $fp
 	lw	$s0 8($sp) 		# m: restore $s0 (self)
 	lw	$ra 4($sp) 		# m: restore $ra
