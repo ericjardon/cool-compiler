@@ -37,7 +37,7 @@ str_const8:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const4
+	.word	int_const3
 	.ascii	"Main"
 	.byte	0	
 	.align	2
@@ -46,7 +46,7 @@ str_const7:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const5
+	.word	int_const4
 	.ascii	"String"
 	.byte	0	
 	.align	2
@@ -55,7 +55,7 @@ str_const6:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const4
+	.word	int_const3
 	.ascii	"Bool"
 	.byte	0	
 	.align	2
@@ -64,7 +64,7 @@ str_const5:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const6
+	.word	int_const5
 	.ascii	"Int"
 	.byte	0	
 	.align	2
@@ -73,7 +73,7 @@ str_const4:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const2
+	.word	int_const6
 	.ascii	"IO"
 	.byte	0	
 	.align	2
@@ -82,7 +82,7 @@ str_const3:
 	.word	4
 	.word	6
 	.word	String_dispTab
-	.word	int_const5
+	.word	int_const4
 	.ascii	"Object"
 	.byte	0	
 	.align	2
@@ -100,7 +100,7 @@ str_const1:
 	.word	4
 	.word	5
 	.word	String_dispTab
-	.word	int_const1
+	.word	int_const2
 	.ascii	"\n"
 	.byte	0	
 	.align	2
@@ -130,37 +130,37 @@ int_const6:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	3
+	.word	2
 	.word	-1
 int_const5:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	6
+	.word	3
 	.word	-1
 int_const4:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	4
+	.word	6
 	.word	-1
 int_const3:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	15
+	.word	4
 	.word	-1
 int_const2:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	2
+	.word	1
 	.word	-1
 int_const1:
 	.word	2
 	.word	4
 	.word	Int_dispTab
-	.word	1
+	.word	5
 	.word	-1
 int_const0:
 	.word	2
@@ -234,7 +234,6 @@ Main_dispTab:
 	.word	IO.out_int
 	.word	IO.in_string
 	.word	IO.in_int
-	.word	Main.fibo
 	.word	Main.main
 	.word	-1 
 Object_protObj:
@@ -268,8 +267,9 @@ String_protObj:
 	.word	-1 
 Main_protObj:
 	.word	5 
-	.word	3 
+	.word	4 
 	.word	Main_dispTab 
+	.word	int_const0 
 	.globl	heap_start 
 heap_start:
 	.word	0 
@@ -356,114 +356,13 @@ Main_init:
 	addiu	$fp $sp 4 
 	move	$s0 $a0 
 	jal	IO_init 
+	la	$a0 int_const0 		# 0
+	sw	$a0 12($s0) 
 	move	$a0 $s0 
 	lw	$fp 12($sp) 
 	lw	$s0 8($sp) 
 	lw	$ra 4($sp) 
 	addiu	$sp $sp 12 
-	jr	$ra 
-Main.fibo:
-	addiu	$sp $sp -12 		# m: frame has 0 locals
-	sw	$fp 12($sp) 		# m: save $fp
-	sw	$s0 8($sp) 		# m: save $s0 (self)
-	sw	$ra 4($sp) 		# m: save $ra
-	addiu	$fp $sp 4 		# m: $fp points to locals
-	move	$s0 $a0 		# m: self to $s0
-	lw	$a0 12($fp) 		# load [i], class cool.structure.Param
-	sw	$a0 0($sp) 		# =: keep left subexp in the stack
-	addiu	$sp $sp -4 		# =
-	la	$a0 int_const0 		# 0
-	lw	$s1 4($sp) 		# =: get saved value from the stack
-	addiu	$sp $sp 4 		# =
-	move	$t1 $s1 		# =: load values to compare
-	move	$t2 $a0 		# =
-	la	$a0 bool_const1 	# =: load boolean true
-	beq	$t1 $t2 label2 		# =: if identical
-	la	$a1 bool_const0 	# =: load boolean false
-	jal	equality_test 		# =
-label2:
-	lw	$t1 12($a0) 		# if: get value from boolean
-	beqz	$t1 label0 		# if: jump if false
-	la	$a0 int_const0 		# 0
-	b	label1 			# if: jump to endif
-label0:
-	lw	$a0 12($fp) 		# load [i], class cool.structure.Param
-	sw	$a0 0($sp) 		# =: keep left subexp in the stack
-	addiu	$sp $sp -4 		# =
-	la	$a0 int_const1 		# 1
-	lw	$s1 4($sp) 		# =: get saved value from the stack
-	addiu	$sp $sp 4 		# =
-	move	$t1 $s1 		# =: load values to compare
-	move	$t2 $a0 		# =
-	la	$a0 bool_const1 	# =: load boolean true
-	beq	$t1 $t2 label5 		# =: if identical
-	la	$a1 bool_const0 	# =: load boolean false
-	jal	equality_test 		# =
-label5:
-	lw	$t1 12($a0) 		# if: get value from boolean
-	beqz	$t1 label3 		# if: jump if false
-	la	$a0 int_const1 		# 1
-	b	label4 			# if: jump to endif
-label3:
-	lw	$a0 12($fp) 		# load [i], class cool.structure.Param
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const1 		# 1
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	sub	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
-	sw	$a0 0($sp) 		# call: Push parameter
-	addiu	$sp $sp -4 
-	move	$a0 $s0 
-	bne	$a0 $zero label6 	# call: protect from dispatch to void
-	la	$a0 str_const0 
-	li	$t1 8 			# call: line number
-	jal	_dispatch_abort 
-label6:
-	lw	$t1 8($a0) 		# call: ptr to dispatch table
-	lw	$t1 28($t1) 		# call: method fibo is offset 7
-	jalr	$t1 
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	lw	$a0 12($fp) 		# load [i], class cool.structure.Param
-	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
-	addiu	$sp $sp -4 		# ar
-	la	$a0 int_const2 		# 2
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	sub	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
-	sw	$a0 0($sp) 		# call: Push parameter
-	addiu	$sp $sp -4 
-	move	$a0 $s0 
-	bne	$a0 $zero label7 	# call: protect from dispatch to void
-	la	$a0 str_const0 
-	li	$t1 8 			# call: line number
-	jal	_dispatch_abort 
-label7:
-	lw	$t1 8($a0) 		# call: ptr to dispatch table
-	lw	$t1 28($t1) 		# call: method fibo is offset 7
-	jalr	$t1 
-	jal	Object.copy 
-	lw	$s1 4($sp) 		# ar: get saved value from the stack
-	addiu	$sp $sp 4 		# ar
-	lw	$t2 12($s1) 		# ar
-	lw	$t1 12($a0) 		# ar
-	add	$t1 $t2 $t1 		# ar
-	sw	$t1 12($a0) 		# ar
-label4:
-label1:
-	lw	$fp 12($sp) 		# m: restore $fp
-	lw	$s0 8($sp) 		# m: restore $s0 (self)
-	lw	$ra 4($sp) 		# m: restore $ra
-	addiu	$sp $sp 16 		# m: restore sp, 4 from formals, 12 from local frame
 	jr	$ra 
 Main.main:
 	addiu	$sp $sp -12 		# m: frame has 0 locals
@@ -472,28 +371,43 @@ Main.main:
 	sw	$ra 4($sp) 		# m: save $ra
 	addiu	$fp $sp 4 		# m: $fp points to locals
 	move	$s0 $a0 		# m: self to $s0
-	la	$a0 int_const3 		# 15
-	sw	$a0 0($sp) 		# call: Push parameter
-	addiu	$sp $sp -4 
-	move	$a0 $s0 
-	bne	$a0 $zero label9 	# call: protect from dispatch to void
+label1:
+	lw	$a0 12($s0) 		# load [i], class cool.structure.Attribute
+	sw	$a0 0($sp) 		# <=: keep left subexp in the stack
+	addiu	$sp $sp -4 		# <=
+	la	$a0 int_const1 		# 5
+	lw	$s1 4($sp) 		# <=: get saved value from the stack
+	addiu	$sp $sp 4 		# <=
+	lw	$t1 12($s1) 		# <=
+	lw	$t2 12($a0) 		# <=
+	la	$a0 bool_const1 	# <=
+	blt	$t1 $t2 label3 		# <=
+	la	$a0 bool_const0 	# <=
+label3:
+	lw	$t1 12($a0) 		# while
+	beq	$t1 $zero label2 	# while
+	lw	$a0 12($s0) 		# load [i], class cool.structure.Attribute
+	sw	$a0 0($sp) 		# ar: keep left subexp in the stack
+	addiu	$sp $sp -4 		# ar
+	la	$a0 int_const2 		# 1
+	jal	Object.copy 
+	lw	$s1 4($sp) 		# ar: get saved value from the stack
+	addiu	$sp $sp 4 		# ar
+	lw	$t2 12($s1) 		# ar
+	lw	$t1 12($a0) 		# ar
+	add	$t1 $t2 $t1 		# ar
+	sw	$t1 12($a0) 		# ar
+	sw	$a0 12($s0) 		# assignment of i
+	b	label1 			# while
+label2:
+	move	$a0 $zero 		# end while
+	bne	$a0 $zero label0 	# at: protect from dispatch to void
 	la	$a0 str_const0 
-	li	$t1 13 			# call: line number
+	li	$t1 5 			# at: line number
 	jal	_dispatch_abort 
-label9:
-	lw	$t1 8($a0) 		# call: ptr to dispatch table
-	lw	$t1 28($t1) 		# call: method fibo is offset 7
-	jalr	$t1 
-	sw	$a0 0($sp) 		# call: Push parameter
-	addiu	$sp $sp -4 
-	move	$a0 $s0 
-	bne	$a0 $zero label8 	# call: protect from dispatch to void
-	la	$a0 str_const0 
-	li	$t1 13 			# call: line number
-	jal	_dispatch_abort 
-label8:
-	lw	$t1 8($a0) 		# call: ptr to dispatch table
-	lw	$t1 16($t1) 		# call: method out_int is offset 4
+label0:
+	lw	$t1 8($a0) 		# at: find dispatch table
+	lw	$t1 4($t1) 		# at: Object.type_name is at offset 1
 	jalr	$t1 
 	lw	$fp 12($sp) 		# m: restore $fp
 	lw	$s0 8($sp) 		# m: restore $s0 (self)

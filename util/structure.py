@@ -44,6 +44,8 @@ class Klass():
         self.attributes = SymbolTable()  # nombre -> tipo, strings
         self.methods = SymbolTable()  # nombre -> Method()
         _allClasses[name] = self
+        self.all_attributes = None
+        self.all_methods = None
 
     def setInherits(self, inherits):
         self.inherits = inherits
@@ -90,19 +92,25 @@ class Klass():
         else:
             return _allClasses[self.inherits].lookupMethod(name)
 
-    def getAvailableMethods(self, stack) -> list[str]:
+    def getAvailableMethods(self, stack, defined_methods=None) -> list[str]:
         """
         Returns a stack containing the names of all methods including
         inherited ones in "Class.method" format
         Popping until emtpy gives the sequence of declared
         methods in top-down order.
         """
+        if not defined_methods:
+            defined_methods = set()
+
         for method in reversed(list(self.methods.keys())):
+            if method not in defined_methods:
+                defined_methods.add(method)
                 stack.append(self.name+"."+method)
+                
         if self.name == "Object":
             return stack
         else:
-            return _allClasses[self.inherits].getAvailableMethods(stack)
+            return _allClasses[self.inherits].getAvailableMethods(stack, defined_methods)
     
     def getAvailableAttributes(self, stack) -> list[str]:
         """
@@ -116,6 +124,42 @@ class Klass():
             return stack
         else:
             return _allClasses[self.inherits].getAvailableAttributes(stack) 
+
+    def getallMethodNames(self) -> list[str]:
+        if (self.all_methods): return self.all_methods
+        return self.recurMethodNames([])
+    
+    def recurMethodNames(self, stack, defined_methods=None) -> list[str]:
+        if not defined_methods:
+            defined_methods = set()
+        for method in reversed(list(self.methods.keys())):
+            if method not in defined_methods:
+                defined_methods.add(method)
+                stack.append(method)  # only the method name
+                
+        if self.name == "Object":
+            return stack[::-1]
+        else:
+            return _allClasses[self.inherits].recurMethodNames(stack, defined_methods)
+    
+    def getAllAttributeNames(self)->list[str]:
+        """
+        Returns the list containing the names of all attributes including
+        inherited ones in order of class hierarchy.
+        Cached for efficiency.
+        """
+        if (self.all_attributes): return self.all_attributes
+        return self.recurAttrNames([])
+
+    def recurAttrNames(self, stack) -> list[str]:
+        for attr_name in reversed(list(self.attributes.keys())):
+            stack.append(attr_name)
+        if self.name=="Object":
+            res = stack[::-1]
+            self.all_attributes = res
+            return res
+        else:
+            return _allClasses[self.inherits].recurAttrNames(stack)
 
     def getBaseAttributesCount(self, count=None):
         """
@@ -208,7 +252,8 @@ class SymbolTableWithScopes(MutableMapping):
     
     def __getitem__(self, key):
         for i in reversed(range(self.last+1)):
-            if key in self.dict_list[i].keys():
+            
+            if key in self.dict_list[i]: #.keys():
                 return self.dict_list[i][key]
         # If it is not in any of the scopes, look in class definition
         return self.klass.lookupAttribute(key)
@@ -240,20 +285,41 @@ class SymbolTableWithScopes(MutableMapping):
     def __repr__(self):
         return self.dict_list.__repr__()
 
+class SymbolTableForLocals(SymbolTableWithScopes):
+    '''
+    Does not use a Klass
+    '''
+    def __init__(self):
+        self.dict_list = [{}]
+        self.last = 0
+
+    def __getitem__(self, key):
+        for i in reversed(range(self.last+1)):
+            if key in self.dict_list[i]: #.keys():
+                return self.dict_list[i][key]
+        # Not a local
+        raise KeyError(key)
+
+class DynamicScopedSymbolTable(SymbolTableWithScopes):
+
+    def __setitem__(self, key, value):
+        # does not raise error
+        self.dict_list[self.last][key] = value
+
 class PruebasDeEstructura(unittest.TestCase):
     def setUp(self):
         Klass("Object", None)  # so Object class exists in class store
         self.k = [Klass("A"), Klass("B", "A"), Klass("C", "B"), Klass("Z", "B")]
 
     def test1(self):
-        self.k[0].addAttribute("a", "Integer")
-        self.assertTrue(self.k[0].lookupAttribute("a") == "Integer")
+        self.k[0].addAttribute("a", "Int")
+        self.assertTrue(self.k[0].lookupAttribute("a") == "Int")
 
     # Búsqueda por herencia
     def test2(self):
-        self.k[0].addAttribute("a", "Integer")
-        self.assertTrue(self.k[1].lookupAttribute("a") == "Integer")
-        self.assertTrue(self.k[2].lookupAttribute("a") == "Integer")
+        self.k[0].addAttribute("a", "Int")
+        self.assertTrue(self.k[1].lookupAttribute("a") == "Int")
+        self.assertTrue(self.k[2].lookupAttribute("a") == "Int")
         self.k[1].addAttribute("b", "String")
         self.assertTrue(self.k[2].lookupAttribute("b") == "String")
 
@@ -262,8 +328,8 @@ class PruebasDeEstructura(unittest.TestCase):
             self.k[3].lookupAttribute("z")
 
     def test4(self):
-        m1 = Method("Integer")
-        m2 = Method("String", [("a", "Integer"), ("b", "Boolean")])
+        m1 = Method("Int")
+        m2 = Method("String", [("a", "Int"), ("b", "Boolean")])
         self.k[0].addMethod("test", m1)
         self.k[1].addMethod("test2", m2)
         self.assertTrue(self.k[0].lookupMethod("test") == m1)

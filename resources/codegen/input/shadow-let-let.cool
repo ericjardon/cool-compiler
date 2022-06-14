@@ -7,10 +7,7 @@ class Main inherits IO
   {
     {
       let var : String <- "bad" in
-	let var : String <- "good" in
-	  out_string( var );
-
-      out_string( "\n" );
+	    out_string( var );
     }
   };
 };

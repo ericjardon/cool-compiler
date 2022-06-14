@@ -6,9 +6,9 @@ from util.structure import _allClasses as classesDict, lookupClass
 import util.asm as asm
 
 CONSTANT_CLASSES = [
-    'int',
-    'bool',
-    'string'
+    'Int',
+    'Bool',
+    'String'
 ]
 
 BUILTIN_STRINGS = [
@@ -24,8 +24,8 @@ KNOWN_SIZES = {
     'IO':3,
     'Int':4,
     'Bool':4,
-    'String': 5,
-} # Main is a user defined class
+    'String': 4,  # is variable
+} # Main class size is variable, as well as string
 
 
 class dataSegment(coolListener):
@@ -118,6 +118,9 @@ class dataSegment(coolListener):
                         default='0'
                     )
 
+    def addBuiltinStrings(self):
+        for string in BUILTIN_STRINGS:
+            self.addStringConst(string)
 
     def addHeapStart(self):
         self.result += asm.tpl_heap_start
@@ -127,7 +130,7 @@ class dataSegment(coolListener):
 
     def addClassNames(self):
         for name in classesDict.keys():
-            self.addStringConst(name)
+            self.addStringConst('"'+name+'"')
 
     def addConstantsText(self):
         self.result += self.str_constants_text
@@ -135,21 +138,23 @@ class dataSegment(coolListener):
         self.result += self.bool_constants_text
     
     def addClassTagIDs(self):
-        for name in classesDict.keys():
+        for name in CONSTANT_CLASSES:
             self.result += asm.tpl_class_tag.substitute(
                 name=name.lower(),
                 n=self.class_id[name]
             )
 
     def addClassNameTable(self):
+        from pprint import pprint
         names = ''
+
         for key, value in self.registered_strings.items():
-            
-            if key in classesDict:
+            # Key includes double-quotes
+            if key!=0 and key[1:-1] in classesDict:
                 names += asm.tpl_class_name.substitute(
                     name=value
                 )
-            
+
         self.result += asm.tpl_class_name_table.substitute(names=names)
 
     def addObjectTable(self):
@@ -170,9 +175,12 @@ class dataSegment(coolListener):
         self.MemMgrBoilerPlate()
         self.addClassNames()
         self.addBoolConstants() 
+        self.addBuiltinStrings()
     
     def exitProgram(self, ctx: coolParser.ProgramContext):
-
+        # from pprint import pprint
+        # print("string constants")
+        # pprint(self.registered_strings)
         self.addNullStringConst()
         self.populateDefaultObjectNames()
 
@@ -186,13 +194,13 @@ class dataSegment(coolListener):
 
     # On enter literal value, add it to str or int stack
     def addStringConst(self, text):
-        byte_size = len(text)
+        byte_size = len(text) - 2 if text.startswith('\"') else len(text)
         if byte_size not in self.registered_ints:
             self.addIntConst(byte_size)
 
         attribute = asm.tpl_string_atr.substitute(
             len_name=self.registered_ints[byte_size],
-            content=f'\"{text}\"'
+            content=f'{text}'  # including double-quotes !!!
         )
         self.str_constants_text += asm.tpl_const_obj_start.substitute(
             name='str_const'+str(self.str_constants_count),
@@ -271,9 +279,12 @@ class dataSegment(coolListener):
 
 def getPrototypeTags() -> str:
     substitution = ''
-    for classname in classesDict.keys():
-        if classname == 'Object' or classname == 'Bool':
-            continue
+    global_prototypes = [
+        'Main',
+        'Int',
+        'String',
+    ]
+    for classname in global_prototypes:
         substitution += (
             asm.tpl_prototype_tag.substitute(
                 name=classname
@@ -286,7 +297,7 @@ def getClassTags() -> str:
     for classname in CONSTANT_CLASSES:
         substitution += (
             asm.tpl_global_class_tag.substitute(
-                name=classname
+                name=classname.lower()
             )
         )
     return substitution
