@@ -217,15 +217,54 @@ ${label_endif}:""")
 #  ARITHMETIC
 
 tpl_arith_addition_expr = Template("""
-${left_subexpr_code}    
+	${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
 	addiu	$$sp $$sp -4 		# add
-${right_subexpr_code}
+	${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
 	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
 	addiu	$$sp $$sp 4 		# add
 	lw	$$t2 12($$s1) 		# add: load Int.value of left into t2
 	lw	$$t1 12($$a0) 		# add: load Int.value of right into t1
 	add	$$t1 $$t2 $$t1 		# add
+	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
+
+tpl_arith_substraction_expr = Template("""
+	${left_subexpr_code}    
+	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
+	addiu	$$sp $$sp -4 		# add
+	${right_subexpr_code}
+	jal	Object.copy         # copy of new Int to a0
+	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
+	addiu	$$sp $$sp 4 		# add
+	lw	$$t2 12($$s1) 		# add: load Int.value of left into t2
+	lw	$$t1 12($$a0) 		# add: load Int.value of right into t1
+	sub	$$t1 $$t2 $$t1 		# substract
+	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
+
+tpl_arith_division_expr = Template("""
+	${left_subexpr_code}    
+	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
+	addiu	$$sp $$sp -4 		# add
+	${right_subexpr_code}
+	jal	Object.copy         # copy of new Int to a0
+	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
+	addiu	$$sp $$sp 4 		# add
+	lw	$$t2 12($$s1) 		# add: load Int.value of left into t2
+	lw	$$t1 12($$a0) 		# add: load Int.value of right into t1
+	div	$$t1 $$t2 $$t1 		# divide
+	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
+
+tpl_arith_multiply_expr = Template("""
+	${left_subexpr_code}    
+	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
+	addiu	$$sp $$sp -4 		# add
+	${right_subexpr_code}
+	jal	Object.copy         # copy of new Int to a0
+	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
+	addiu	$$sp $$sp 4 		# add
+	lw	$$t2 12($$s1) 		# add: load Int.value of left into t2
+	lw	$$t1 12($$a0) 		# add: load Int.value of right into t1
+	mul	$$t1 $$t2 $$t1 		# multiply
 	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
 
