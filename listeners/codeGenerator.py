@@ -687,4 +687,57 @@ class codeGenerator(coolListener):
         ctx.code = '\nMISSING CODE FOR <NewContext>'
 
     def exitAddition(self, ctx:coolParser.AdditionContext):
-        ctx.code = '\nMISSING CODE FOR <AdditionContext>'
+        left_expr = ctx.expr()[0].getText()
+        right_expr = ctx.expr()[1].getText()
+        
+        left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
+        right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
+
+
+        
+        ctx.code = asm.tpl_arith_addition_expr.substitute(
+            left_subexpr_code= left_code,
+            right_subexpr_code = right_code
+        )
+    
+    def exitSubtraction(self, ctx: coolParser.SubtractionContext):
+        left_expr = ctx.expr()[0].getText()
+        right_expr = ctx.expr()[1].getText()
+        
+        left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
+        right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
+
+
+        
+        ctx.code = asm.tpl_arith_substraction_expr.substitute(
+            left_subexpr_code= left_code,
+            right_subexpr_code = right_code
+        )
+    
+    def exitDivision(self, ctx: coolParser.DivisionContext):
+        left_expr = ctx.expr()[0].getText()
+        right_expr = ctx.expr()[1].getText()
+        
+        left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
+        right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
+
+
+        
+        ctx.code = asm.tpl_arith_division_expr.substitute(
+            left_subexpr_code= left_code,
+            right_subexpr_code = right_code
+        )
+
+    def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
+        left_expr = ctx.expr()[0].getText()
+        right_expr = ctx.expr()[1].getText()
+        
+        left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
+        right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
+
+
+        
+        ctx.code = asm.tpl_arith_multiply_expr.substitute(
+            left_subexpr_code= left_code,
+            right_subexpr_code = right_code
+        )
