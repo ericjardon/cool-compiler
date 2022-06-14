@@ -217,20 +217,18 @@ ${label_endif}:""")
 tpl_while_loop = Template(
 """
 ${predicate_label}:	${predicate_subexpr}
-${true_label}:
 	lw	$$t1	12($$a0)			# while
 	beq	$$t1	$$zero	${false_label}		# while condition check	${true_code}
+	b	${predicate_label}		# while
 ${false_label}:
 	move	$$a0	$$zero		# end while"""
 )
 
 #  ARITHMETIC
 
-tpl_arith_addition_expr = Template("""
-	${left_subexpr_code}    
+tpl_arith_addition_expr = Template("""${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
-	addiu	$$sp $$sp -4 		# add
-	${right_subexpr_code}
+	addiu	$$sp $$sp -4 		# add	${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
 	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
 	addiu	$$sp $$sp 4 		# add
@@ -239,11 +237,9 @@ tpl_arith_addition_expr = Template("""
 	add	$$t1 $$t2 $$t1 		# add
 	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
 
-tpl_arith_substraction_expr = Template("""
-	${left_subexpr_code}    
+tpl_arith_substraction_expr = Template("""${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
-	addiu	$$sp $$sp -4 		# add
-	${right_subexpr_code}
+	addiu	$$sp $$sp -4 		# add	${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
 	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
 	addiu	$$sp $$sp 4 		# add
@@ -252,11 +248,9 @@ tpl_arith_substraction_expr = Template("""
 	sub	$$t1 $$t2 $$t1 		# substract
 	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
 
-tpl_arith_division_expr = Template("""
-	${left_subexpr_code}    
+tpl_arith_division_expr = Template("""${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
-	addiu	$$sp $$sp -4 		# add
-	${right_subexpr_code}
+	addiu	$$sp $$sp -4 		# add	${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
 	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
 	addiu	$$sp $$sp 4 		# add
@@ -265,11 +259,9 @@ tpl_arith_division_expr = Template("""
 	div	$$t1 $$t2 $$t1 		# divide
 	sw	$$t1 12($$a0) 		# add: store result into new Int.value""")
 
-tpl_arith_multiply_expr = Template("""
-	${left_subexpr_code}    
+tpl_arith_multiply_expr = Template("""${left_subexpr_code}    
 	sw	$$a0 0($$sp) 		# add: push left subexp to the stack
-	addiu	$$sp $$sp -4 		# add
-	${right_subexpr_code}
+	addiu	$$sp $$sp -4 		# add	${right_subexpr_code}
 	jal	Object.copy         # copy of new Int to a0
 	lw	$$s1 4($$sp) 		# add: pop left subexpr from stack into $$s1
 	addiu	$$sp $$sp 4 		# add

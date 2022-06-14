@@ -603,7 +603,6 @@ class codeGenerator(coolListener):
         loop_expr = ctx.expr()[1]
 
         predicate_label_name = 'while-pred' + str(self.labels)
-        true_label_name = 'while-true' + str(self.labels)
         false_label_name = 'while-false' + str(self.labels)
         self.labels += 1
 
@@ -611,7 +610,6 @@ class codeGenerator(coolListener):
         ctx.code = asm.tpl_while_loop.substitute(
             predicate_label= predicate_label_name,
             predicate_subexpr= predicate_subexpr.code,
-            true_label= true_label_name,
             false_label= false_label_name,
             true_code = loop_expr.code,
         )
@@ -702,69 +700,36 @@ class codeGenerator(coolListener):
         ctx.code = '\nMISSING CODE FOR <NewContext>'
 
     def exitAddition(self, ctx:coolParser.AdditionContext):
-
-        try :
-            left_expr = ctx.expr()[0].primary().INTEGER().getText()
-            right_expr = ctx.expr()[1].primary().INTEGER().getText()
-
-            left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
-            right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
-            
-            ctx.code = asm.tpl_arith_addition_expr.substitute(
-                left_subexpr_code= left_code,
-                right_subexpr_code = right_code
+        left_expr = ctx.expr()[0]
+        right_expr = ctx.expr()[1]
+        ctx.code = asm.tpl_arith_addition_expr.substitute(
+                left_subexpr_code= left_expr.code,
+                right_subexpr_code = right_expr.code
             )
-
-        except AttributeError:
-            ctx.code=''
        
         
     
     def exitSubtraction(self, ctx: coolParser.SubtractionContext):
 
-        try :
-            left_expr = ctx.expr()[0].primary().INTEGER().getText()
-            right_expr = ctx.expr()[1].primary().INTEGER().getText()
-
-            left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
-            right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
-            
-            ctx.code = asm.tpl_arith_substraction_expr.substitute(
-                left_subexpr_code= left_code,
-                right_subexpr_code = right_code
+        left_expr = ctx.expr()[0]
+        right_expr = ctx.expr()[1]
+        ctx.code = asm.tpl_arith_substraction_expr.substitute(
+                left_subexpr_code= left_expr.code,
+                right_subexpr_code = right_expr.code
             )
-
-        except AttributeError:
-            ctx.code=''
 
     def exitDivision(self, ctx: coolParser.DivisionContext):
-        try :
-            left_expr = ctx.expr()[0].primary().INTEGER().getText()
-            right_expr = ctx.expr()[1].primary().INTEGER().getText()
-
-            left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
-            right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
-            
-            ctx.code = asm.tpl_arith_division_expr.substitute(
-                left_subexpr_code= left_code,
-                right_subexpr_code = right_code
+        left_expr = ctx.expr()[0]
+        right_expr = ctx.expr()[1]
+        ctx.code = asm.tpl_arith_division_expr.substitute(
+                left_subexpr_code= left_expr.code,
+                right_subexpr_code = right_expr.code
             )
-
-        except AttributeError:
-            ctx.code=''
 
     def exitMultiplication(self, ctx: coolParser.MultiplicationContext):
-        try :
-            left_expr = ctx.expr()[0].primary().INTEGER().getText()
-            right_expr = ctx.expr()[1].primary().INTEGER().getText()
-
-            left_code = 'la  $a0  '+ self.registered_ints[int(left_expr)] + '    #'+left_expr
-            right_code = 'la  $a0  '+ self.registered_ints[int(right_expr)]+ '    #'+right_expr
-            
-            ctx.code = asm.tpl_arith_multiply_expr.substitute(
-                left_subexpr_code= left_code,
-                right_subexpr_code = right_code
+        left_expr = ctx.expr()[0]
+        right_expr = ctx.expr()[1]
+        ctx.code = asm.tpl_arith_multiply_expr.substitute(
+                left_subexpr_code= left_expr.code,
+                right_subexpr_code = right_expr.code
             )
-
-        except AttributeError:
-            ctx.code=''
